@@ -1,0 +1,45 @@
+<?php
+// $Id$
+
+/**
+* Implementation of hook_install
+*/
+
+function joury_clients_install(){
+	drupal_install_schema('joury_clients') ; 
+}
+
+
+
+/**
+* Implementation of hook_uninstall
+*/
+
+function joury_clients_uninstall(){
+	drupal_uninstall_schema('joury_clients') ; 
+}
+
+
+/**
+* Implementation of hook_schema
+*/
+
+function joury_clients_schema(){
+	$schema['clients'] = array(
+		'description' => 'this table contain clients data and information' , 
+		'fields' => array(
+			'cid' => array('type' => 'serial' , 'unsigned' => TRUE, 'not null' => TRUE,) ,
+			'nid' => array('type' => 'int' , 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0, ) ,
+			'firstname' => array('type' => 'varchar', 'length' => 32 , 'default' => '',),
+			'lastname' => array('type' => 'varchar', 'length' => 32 , 'default' => '',),
+			'birthdate' => array('type' => 'varchar', 'length' => 32 , 'default' => '',),
+			'phone' => array('type' => 'varchar', 'length' => 32 , 'default' => '',),
+			'mobile' => array('type' => 'varchar', 'length' => 32 , 'default' => '',),
+			'email' => array('type' => 'varchar', 'length' => 40 , 'default' => '',),		
+			'address' => array('type' => 'varchar', 'length' => 150 , 'default' => '',),
+		),
+		 'primary key' => array('cid'),
+	); 
+	return $schema ; 
+
+}

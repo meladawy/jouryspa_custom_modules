@@ -1,0 +1,60 @@
+<?php
+// $Id$
+
+/**
+* Implementation of hook_install
+*/
+function joury_store_administration_install(){
+ 	drupal_install_schema('joury_store_administration'); 
+}
+
+
+/**
+* Implementation of hook_uninstall
+*/
+function joury_store_administration_uninstall(){
+ 	drupal_uninstall_schema('joury_store_administration'); 
+}
+
+
+/**
+* Implementation of hook_schema
+*/
+function joury_store_administration_schema(){
+	$schema['joury_store_administration_content'] = array(
+		'description' => 'this table control the stores ',
+		'fields' => array(
+			'id' => array('type' => 'serial' , 'unsigned' => TRUE , 'not null' => TRUE,) , 
+			'productid' => array('type' => 'int' , 'unsigned' => TRUE , 'not null' => TRUE, 'default' => 0 , ) ,	
+			'productname' => array('type' => 'varchar' ,'length' => 40, 'not null' => TRUE, 'default' => '' , ) ,	
+			'quantity' => array('type' => 'float' , 'unsigned' => TRUE , 'not null' => TRUE, 'default' => 0.0 , ) ,
+			'storeprice' => array('type' => 'float' , 'unsigned' => TRUE , 'not null' => TRUE, 'default' => 0.0 , ) ,	
+			'sellprice' => array('type' => 'float' , 'unsigned' => TRUE , 'not null' => TRUE, 'default' => 0.0 , ) ,	
+
+		), 
+		'primary key' => array('id'),
+	
+	);
+	$schema['joury_requests_from_suppliers_log'] = array(
+		'description' => 'this table control the showrooms ',
+		'fields' => array(
+			'id' => array('type' => 'serial' , 'unsigned' => TRUE , 'not null' => TRUE,) , 
+			'productid' => array('type' => 'int' , 'unsigned' => TRUE , 'not null' => TRUE, 'default' => 0 , ) ,
+			'productname' => array('type' => 'varchar' ,'length' => 40, 'not null' => TRUE, 'default' => '' , ) ,
+			'quantity' => array('type' => 'int' , 'unsigned' => TRUE , 'not null' => TRUE, 'default' => 0 , ) ,	
+			'supplierid' =>array('type' => 'int' , 'unsigned' => TRUE , 'not null' => TRUE, 'default' => 0 , ) ,	
+			'suppliername' => array('type' => 'varchar' ,'length' => 40, 'not null' => TRUE, 'default' => '' , ) ,
+			'note' => array('type' => 'text' , 'not null' => TRUE, 'default' => '' , ) ,		
+			'itempricead' => array('type' => 'float' , 'unsigned' => TRUE , 'not null' => TRUE, 'default' => 0.0 , ) ,	
+			'itempricebd' => array('type' => 'float' , 'unsigned' => TRUE , 'not null' => TRUE, 'default' => 0.0 , ) ,				
+			'discountp' => array('type' => 'float' , 'unsigned' => TRUE , 'not null' => TRUE, 'default' => 0.0 , ) ,	
+			'discounta' => array('type' => 'float' , 'unsigned' => TRUE , 'not null' => TRUE, 'default' => 0.0 , ) ,	
+			'nettotalad' => array('type' => 'float' , 'unsigned' => TRUE , 'not null' => TRUE, 'default' => 0.0 , ) ,							
+			'nettotalbd' => array('type' => 'float' , 'unsigned' => TRUE , 'not null' => TRUE, 'default' => 0.0 , ) ,			
+			'status' => array('type' => 'int' , 'unsigned' => TRUE , 'not null' => TRUE, 'default' => 0 , ) ,							
+		),
+		'primary key' => array('id'),
+	);
+	
+	return $schema ; 
+}

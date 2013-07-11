@@ -1,0 +1,9 @@
+$(document).ready(start) ; 
+
+function start(){
+	$("#edit-date").datepicker({ changeMonth: true }) ; 
+	$("a#attendance-link").click(function(){
+		alert("a77a") ; 
+		return false ; 	
+	}); 	
+}	

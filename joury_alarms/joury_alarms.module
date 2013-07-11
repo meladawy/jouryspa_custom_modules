@@ -1,0 +1,98 @@
+<?php
+// $Id$
+
+
+
+
+/**
+* Implemeneration of hook_menu
+*/
+function joury_alarms_menu(){
+	$menu['joury/alarm/showrooms'] =  array(
+		'title' => t('SHOWROOMS ALARM') , 
+		'description' => '' , 
+ 		'page callback' => '_joury_alarm_showrooms' , 
+		'access arguments' => array('menu- showrooms alarm')  ,
+		'type' => MENU_NORMAL_ITEM,
+	) ; 	
+	
+	$menu['joury/alarm/stores'] =  array(
+		'title' => t('STORES ALARM') , 
+		'description' => '' , 
+ 		'page callback' => '_joury_alarm_stores' , 
+		'access arguments' => array('menu- stores alarm')  ,
+		'type' => MENU_NORMAL_ITEM,
+	) ; 	
+	
+	
+	return $menu ; 
+}	
+
+/**
+* implmentatin of hook_perm
+*/
+function joury_alarms_perm(){
+	return array("menu- showrooms alarm", "menu- stores alarm" ) ; 
+}
+
+
+/**
+* Implementatio of hook_theme
+*/
+function joury_alarms_theme(){
+	return array(	
+		'theme_joury_alarm_showroom' => array(
+			'template' => 'page_joury_alarm_showroom' , 
+			'arguments' => array(1) ,  
+		) , 
+		'theme_joury_alarm_store' => array(
+			'template' => 'page_joury_alarm_store' , 
+			'arguments' => array(1) ,  
+		) , 
+	);
+}	
+
+/**
+* joury/alaram/showrooms page
+*/
+function _joury_alarm_showrooms(){
+	return theme('theme_joury_alarm_showroom')	 ; 
+}	
+
+
+/**
+* joury/alaram/stores page
+*/
+function _joury_alarm_stores(){
+	return theme('theme_joury_alarm_store')	 ; 
+}	
+
+
+/**
+* Private function to get products under quantity
+*/
+function _get_products_of_showroom_with_alarm(){
+	$result_handle = db_query("select * from {joury_showroom} where `productid` = (select pid from 
+	{joury_products} where joury_showroom.productid = joury_products.pid and joury_products.d_qty >= joury_showroom.quantity ) order by showroomname asc") ; 
+	while($result_obj = db_fetch_object($result_handle)){
+		$result[] = $result_obj ; 	
+	}	
+	
+	return $result ; 
+}	
+
+
+/**
+* Private function to get products under quantity
+*/
+function _get_products_of_store_with_alarm(){
+	$result_handle = db_query("select * from {joury_store} where `productid` = (select pid from 
+	{joury_products} where joury_store.productid = joury_products.pid and joury_products.d_qty >= joury_store.quantity ) order by storename asc") ; 
+	while($result_obj = db_fetch_object($result_handle)){
+		$result[] = $result_obj ; 	
+	}	
+	
+	return $result ; 	
+}
+	
+

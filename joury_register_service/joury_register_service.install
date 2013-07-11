@@ -1,0 +1,58 @@
+<?php
+// $Id$
+
+
+
+/**
+* IMplementation of hook_install
+*/
+function joury_register_service_install(){
+	drupal_install_schema("joury_register_service") ; 	
+}	
+
+
+/**
+* IMplementation of hook_uninstall
+*/
+function joury_register_service_uninstall(){
+	drupal_uninstall_schema("joury_register_service") ; 	
+}	
+
+
+
+/**
+* Implementattion of  hook_schema
+*/
+
+function joury_register_service_schema(){
+	$schema['joury_client_services_register'] = array(
+		'description' => 'which client regestered for which service and when'  , 
+		'fields' => array(
+			'id' => array('type' => 'serial' , 'not null' => TRUE , 'unsigned' => TRUE ,  )  , 
+			'cid' => array('type' => 'int' , 'not null' => TRUE , 'unsigned' => TRUE ,'default' => 0 ,  )  , 
+			'sid' => array('type' => 'int' , 'not null' => TRUE , 'unsigned' => TRUE ,' default' => 0  ,  )  , 
+		   'date' => array('type' => 'varchar','length' => 40 , 'not null' => TRUE , 'default' => '' ,  )  , 
+		   'payment_method' => array('type' => 'varchar','length' => 40 , 'not null' => TRUE , 'default' => '' ,  )  , 
+		   'paid' => array('type' => 'float' , 'not null' => TRUE , 'unsigned' => TRUE ,' default' => 0,0  ,  )  , 
+		   'status' => array('type' => 'int' ,'length' => 2, 'not null' => TRUE , 'unsigned' => TRUE ,' default' => 0  ,  )  , 
+		   'author' => array('type' => 'varchar','length' => 40 , 'not null' => TRUE , 'default' => '' ,  )  , 
+		 	'room' => array('type' => 'varchar','length' => 40 , 'not null' => TRUE , 'default' => '' ,  )  , 
+		  	'by' => array('type' => 'varchar','length' => 40 , 'not null' => TRUE , 'default' => '' ,  )  , 
+		   'centername' => array('type' => 'varchar','length' => 40 , 'not null' => TRUE , 'default' => '' ,  )  , 
+		),
+		'primary key' => array('id') , 
+	);
+	
+		$schema['joury_register_kenet'] = array(
+		'description' => 'which client regestered for which service and when'  , 
+		'fields' => array(
+			'id' => array('type' => 'serial' , 'not null' => TRUE , 'unsigned' => TRUE ,  )  , 
+			'register_id' => array('type' => 'int' , 'not null' => TRUE , 'unsigned' => TRUE ,'default' => 0 ,  )  , 
+			'card_id' => array('type' => 'int' , 'not null' => TRUE , 'unsigned' => TRUE ,' default' => 0  ,  )  , 
+		),
+		'primary key' => array('id') , 
+	);
+	
+	return $schema ;	
+	
+}	

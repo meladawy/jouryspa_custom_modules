@@ -1,0 +1,278 @@
+<?php
+// $Id$
+
+/**
+* Implementation of hook_nodeapi
+*/
+
+function joury_staff_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL){
+	switch($op) {	
+		case 'insert':
+		if($node->type == 'staff'){
+			$nodeid = $node->nid ;  
+			$firstname = $node->title ;  
+			$lastname = $node->field_stafflastname[0]['value'] ;  
+			$birthdate = $node->field_staffbirthdate[0]['value'] ;
+			$phone = $node->field_staffphone[0]['value'] ;
+			$joiningdate = $node->field_staffjoiningdate[0]['value'] ;
+			$attendtime = $node->field_staffattendtime[0]['value'] ;
+			$leavetime = $node->field_staffleavetime[0]['value'] ;
+			$employeeid = $node->field_staffemployeeid[0]['value'] ;
+			$salary = $node->field_staffsalary[0]['value'] ;
+			$weekend = $node->field_staffweekend[0]['value'] ;
+			$civilid = $node->field_staffcivilid[0]['value'] ;
+			$mobile = $node->field_staffmobile[0]['value'] ;
+			$email = $node->field_staffemail[0]['value'] ;
+			$address = $node->field_staffaddress[0]['value'] ;		
+			db_query("insert into {joury_staff} (`attend_time`,`leave_time`,`nid`,`firstname`,`lastname`,`birthdate` , `phone`, `mobile`, `email`,`address`, `civil_id`, `joiningdate`, `employee_id`, `salary`, `weekend`) values ('%s', '%s', %d,'%s','%s','%s','%s','%s','%s','%s', '%s', '%s', %d, %f, %d)",
+			$attendtime, $leavetime, $nodeid,$firstname,$lastname,$birthdate,$phone,$mobile,$email,$address,$civilid, $joiningdate, $employeeid, $salary, $weekend ) ;
+		}		
+		break;  	
+		
+		
+		case 'update' : 
+		if($node->type == 'staff'){
+			$nodeid = $node->nid ;  
+			$firstname = $node->title ;  
+			$lastname = $node->field_stafflastname[0]['value'] ;  
+			$birthdate = $node->field_staffbirthdate[0]['value'] ;
+			$attendtime = $node->field_staffattendtime[0]['value'] ;
+			$leavetime = $node->field_staffleavetime[0]['value'] ;
+			$phone = $node->field_staffphone[0]['value'] ;
+			$employeeid = $node->field_staffemployeeid[0]['value'] ;
+			$salary = $node->field_staffsalary[0]['value'] ;
+			$weekend = $node->field_staffweekend[0]['value'] ;
+			$joiningdate = $node->field_staffjoiningdate[0]['value'] ;
+			$civilid = $node->field_staffcivilid[0]['value'] ;
+			$mobile = $node->field_staffmobile[0]['value'] ;
+			$email = $node->field_staffemail[0]['value'] ;
+			$address = $node->field_staffaddress[0]['value'] ;		 
+			db_query("update {joury_staff} set `attend_time` = '%s', `leave_time` = '%s',  `employee_id` = %d , `salary` = %f , `weekend` = %d , `firstname` = '%s' , `lastname` = '%s' , `birthdate` = '%s',  `phone` = '%s', `mobile` = '%s' , `email` = '%s' ,  `address` = '%s', `civil_id`='%s', `joiningdate` = '%s'  where `nid` = %d ",
+			$attendtime, $leavetime, $employeeid, $salary, $weekend, $firstname,$lastname,$birthdate,$phone,$mobile,$email,$address,$civilid,$joiningdate, $nodeid) ; 
+		}		
+		break ;  
+		
+		case 'delete' :
+		if($node->type == 'staff'){
+			db_query("delete from {joury_staff} where `nid` = %d" , $node->nid) ; 
+		}	
+		break ; 
+	}
+}	
+
+
+
+/**
+* Implementation of hook_menu
+*/
+
+function joury_staff_menu(){
+	
+	$items['ajax/staff/from-store/process'] = array( // de bt3mil el process lama 7d mn el staff bia5od product mn el store
+		'title' => t('') , 
+		'description' => t('') , 
+		'access arguments' => array('access content') ,
+		'page callback' => '_staff_fromstore_process',   
+		'type' => MENU_CALLBACK, 
+	);	
+	
+	return $items ; 
+	
+}	
+
+
+
+/**
+* Private function : de bt3mil el process lama 7d mn el staff bia5od product mn el store
+*/
+function _staff_fromstore_process(){
+	if(!empty($_POST['staffid']) && !empty($_POST['productid']) &&!empty($_POST['price']) &&!empty($_POST['storeid']) &&!empty($_POST['quantity']) &&!empty($_POST['date'])){
+		$staffid = _sqlInject($_POST['staffid']) ; 
+		$productid =  _sqlInject($_POST['productid']) ; 
+		$productname =  _get_product_name($productid) ; 
+		$price = _sqlInject($_POST['price']) ; 
+		$storeid =  _sqlInject($_POST['storeid']) ; 
+		$quantity = _sqlInject($_POST['quantity']) ; 
+		$date =  $_POST['date'] ; 
+		$total_price = $price * $quantity ; 
+		$staffname = _get_staff_name($staffid) ; 
+		$storename = _get_store_name($storeid) ; 
+		
+		
+		
+		// insert data to joury_showroom table
+			
+					db_query("insert into `joury_staff_products` (`staffid`,`staffname`,`productid`,`productname`,`quantity`,`price`,`date`,`storeid`,`storename`) values (%d,'%s',%d,'%s',%d,%f,'%s',%d,'%s')",$staffid,$staffname,$productid,$productname,$quantity,$price,$date,$storeid,$storename ) ; 		
+					db_query("update `joury_store` set `quantity` = `quantity` - %f where `storeid` = %d and `productid` = %d", $quantity,$storeid,$productid ) ; 		
+					$quantity_in_store_now = db_query("select `quantity` from `joury_store` where `storeid` = %d and `productid` = %d ",$storeid, $productid ) ; 
+					$quantity_in_store_now_obj = db_fetch_object($quantity_in_store_now) ; 
+					$quantity_in_store_now = $quantity_in_store_now_obj->quantity ; 
+					if($quantity_in_store_now == '0'){
+						db_query("delete from `joury_store` where `storeid` = %d and `productid` = %d " ,$storeid,$productid) ; 
+					}				 		
+		//	}
+			
+			
+		// the end of inserting data into joury_showroom table	
+		
+		
+		
+		
+		
+		
+		
+	}else{
+		return ; 	
+	}		 
+}
+
+
+
+/**
+* Implementation of hook_form_alter
+*/
+
+function joury_staff_form_alter(&$form, &$form_state, $form_id){
+ 	if($form_id == 'staff_node_form'){
+		$url = drupal_get_path('module' , 'joury_staff') ; 
+		drupal_add_css($url.'/smoothness/jquery-ui-1.8.14.custom.css') ;
+		drupal_add_css($url.'/css/style.css') ;
+		drupal_add_js($url.'/js/jquery-1.5.1.min.js') ; 
+		drupal_add_js($url.'/js/jquery-ui-1.8.14.custom.min.js') ; 
+
+	$another_module_path = drupal_get_path('module' , 'joury_register_service') ;
+	drupal_add_js($another_module_path."/jquery-1.6.1.min.js") ;  
+	drupal_add_js($another_module_path."/fancybox/jquery.mousewheel-3.0.4.pack.js") ;
+	drupal_add_js($another_module_path."/fancybox/jquery.fancybox-1.3.4.pack.js") ;
+	drupal_add_css($another_module_path."/fancybox/jquery.fancybox-1.3.4.css") ;
+	drupal_add_js($another_module_path."/js/jquery-ui-1.8.14.custom.min.js") ;
+	drupal_add_css($another_module_path."/smoothness/jquery-ui-1.8.14.custom.css") ;
+	drupal_add_js($another_module_path."/js/jquery-ui-timepicker-addon.js") ; 
+
+
+
+		drupal_add_js($url.'/script.js') ; 
+		$form['#validate'][] = '_staff_check_if_number_or_phone_exist_before' ; 
+		$form['#validate'][] = '_staff_check_if_employeeid_exist_before' ; 
+	} 
+}
+
+
+/**
+* get staff of employeeid
+*/
+function _get_staff_of_employeeid($employeeid) {
+	$result_handler = db_query("select * from {joury_staff} where `employee_id` = %d" , $employeeid) ; 
+	$result_obj = db_fetch_object($result_handler) ; 
+	if(!empty($result_obj->sid)) {
+		return $result_obj ; 	
+	}else {
+		return '' ; 	
+	}		
+}
+
+
+/**
+* check if staff phone/mobile number exist before
+*/
+function _staff_check_if_number_or_phone_exist_before($form, $form_state) {
+	$mobile = $form_state['values']['field_staffmobile'][0]['value'] ; 
+	$phone = $form_state['values']['field_staffphone'][0]['value'] ; 
+	$nid = $form['nid']['#value'] ; 
+	
+	$phone_result_handler = db_query("select count(*) from {joury_staff} where (phone = '%s') and `nid` != %d" , $phone, $nid) ; 
+	$phone_result_array = db_fetch_array($phone_result_handler) ; 
+	$phone_result = $phone_result_array['count(*)'] ;
+	if($phone_result > 0){
+		form_set_error('field_staffphone', 'This phone number is reserved for another staff' ) ; 	
+	}
+	
+	$mobile_result_handler = db_query("select count(*) from {joury_staff} where (mobile = '%s') and `nid` != %d" , $mobile, $nid) ; 
+	$mobile_result_array = db_fetch_array($mobile_result_handler) ; 
+	$mobile_result = $mobile_result_array['count(*)'] ;
+	if($mobile_result > 0){
+		form_set_error('field_staffmobile', 'This mobile number is reserved for another staff' ) ; 	
+	}	
+}	
+
+
+/**
+* check if staff EID  exist before
+*/
+function _staff_check_if_employeeid_exist_before($form, $form_state) {
+	$employeeid = $form_state['values']['field_staffemployeeid'][0]['value'] ; 
+	$nid = $form['nid']['#value'] ; 
+	
+	$employeeid_result_handler = db_query("select count(*) from {joury_staff} where (employee_id = '%d') and `nid` != %d" , $employeeid, $nid) ; 
+	$employeeid_result_array = db_fetch_array($employeeid_result_handler) ; 
+	$employeeid_result = $employeeid_result_array['count(*)'] ;
+	if($employeeid_result > 0){
+		form_set_error('field_staffemployeeid', 'This Employee ID exist before' ) ; 	
+	}
+	
+}	
+
+/**
+* private function to get the staff name
+*/
+
+function _get_staff_name($staffid){
+	$result_handle = db_query("select firstname,lastname from `joury_staff` where `sid` = %d " , $staffid ) ; 
+	$result_obj = db_fetch_object($result_handle) ; 
+	$resultfirst = $result_obj->firstname;  
+	$resultlast = $result_obj->lastname; 
+	$result = $resultfirst." ".$resultlast ; 
+	if(!empty($result)){
+		return  $result ; 
+	}else{
+		return '' ; 	
+	}	
+}	
+
+/**
+* Implementation of hook_jourymenu
+*/
+
+function joury_staff_jourymenu(){
+	return array(
+	'staff',
+	'joury_staff',
+	array('phone' => 'phone','mobile' => 'mobile'),
+	array(),
+	'',
+	'',
+	); 	
+}
+
+/**
+* Private function that print select input type of table name
+*/
+
+function _print_select_input_type_staff($selectname,$tablename,$fieldtosee, $valuefield, $firstlabel){
+	$result_handle = db_query("select *  from `{$tablename}` ") ; 
+	echo "<select name='{$selectname}' id='{$selectname}' class='joury-{$selectname}-menu'>"	 ;
+	echo "<option value='0'>" ; 
+			echo $firstlabel ; 
+		echo "</option>" ;
+		
+	while($result = db_fetch_object($result_handle)) {
+		echo "<option value='".$result->$valuefield."'>" ; 
+			echo $result->firstname." ".$result->lastname ; 
+		echo "</option>" ;
+	}		
+	echo "</select>" ;
+}	
+
+
+/**
+* private function that check if this product exist in this place before or not
+*/
+function _check_product_in_staff($productid,$staffid,$date){
+	$result_handle = db_query("select count(*) from `joury_staff_products` where `productid` = %d and `staffid` = %d and `date` = '%s'" ,$productid , $staffid,$date ) ; 
+	$result = db_fetch_array($result_handle) ; 
+	if($result['count(*)'] == 1 ){
+		return  1 ; 
+	}else{
+		return 0 ; 	
+	}		
+}	

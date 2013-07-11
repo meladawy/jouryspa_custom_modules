@@ -1,0 +1,56 @@
+<?php
+// $Id$
+
+/**
+* Implementation of hook_install
+*/
+function joury_clients_attendance_install(){
+ 	drupal_install_schema('joury_clients_attendance'); 
+}
+
+
+/**
+* Implementation of hook_uninstall
+*/
+function joury_clients_attendance_uninstall(){
+ 	drupal_uninstall_schema('joury_clients_attendance'); 
+}
+
+
+/**
+* Implementation of hook_schema
+*/
+function joury_clients_attendance_schema(){
+	$schema['joury_clients_attendance_size'] = array(
+		'description' => 'this table control the showrooms ',
+		'fields' => array(
+			'id' => array('type' => 'serial' , 'unsigned' => TRUE , 'not null' => TRUE,) , 
+			'rid' => array('type' => 'int' , 'unsigned' => TRUE , 'not null' => TRUE, 'default' => 0 , ) ,
+			'session' => array('type' => 'int' , 'unsigned' => TRUE , 'not null' => TRUE, 'default' => 0 , ) ,
+			'column_size_nid' => array('type' => 'int' , 'unsigned' => TRUE , 'not null' => TRUE, 'default' => 0 , ) ,	
+			'column_size_value'  => array('type' => 'varchar' ,'length' => 40, 'not null' => TRUE, 'default' => '' , ) ,	
+
+		), 
+				
+		'primary key' => array('id'),
+	
+	);
+	
+		$schema['joury_clients_attendance_date'] = array(
+		'description' => 'this table control the showrooms ',
+		'fields' => array(
+			'id' => array('type' => 'serial' , 'unsigned' => TRUE , 'not null' => TRUE,) , 
+			'rid' => array('type' => 'int' , 'unsigned' => TRUE , 'not null' => TRUE, 'default' => 0 , ) ,
+			'session' => array('type' => 'int' , 'unsigned' => TRUE , 'not null' => TRUE, 'default' => 0 , ) ,
+			'date'  => array('type' => 'varchar' ,'length' => 40, 'not null' => TRUE, 'default' => '' , ) ,	
+			'attend' => array('type' => 'int' , 'unsigned' => TRUE , 'not null' => TRUE, 'default' => 0 , ) ,
+			'room'  => array('type' => 'varchar' ,'length' => 40, 'not null' => TRUE, 'default' => '' , ) ,	
+			'date'  => array('type' => 'varchar' ,'length' => 40, 'not null' => TRUE, 'default' => '' , ) ,	
+
+		), 
+		'primary key' => array('id'),
+	
+		);
+	
+	return $schema ; 
+}

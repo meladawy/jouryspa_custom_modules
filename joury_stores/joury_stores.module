@@ -1,0 +1,67 @@
+<?php
+// $Id$
+
+
+/**
+* Implementation of hook_nodeapi
+*/
+
+function joury_stores_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL){
+	switch($op){
+			case 'insert' :
+			if($node->type == 'stores'){
+				$name = $node->title ; 
+				$nid = $node->nid ;
+				$description = $node->body ; 
+				$center = node_load($node->field_storecenter[0]['nid']) ;
+				
+				db_query("insert into {joury_stores} (`center`, `nid` , `name` , `description`) 
+				 values ('%s', %d , '%s' , '%s')" ,$center->title,  $nid, $name, $description); 
+				include_once './includes/bootstrap.inc';
+				drupal_bootstrap(DRUPAL_BOOTSTRAP_FULL);
+				drupal_flush_all_caches();
+			}			
+			break; 		
+			
+			case 'update' :
+			if($node->type == 'stores'){
+				$name = $node->title ; 
+				$nid = $node->nid ;
+				$description = $node->body ;  
+				$center = node_load($node->field_storecenter[0]['nid']) ;
+				db_query("update  {joury_stores} set `center` = '%s' ,  `name` = '%s', `description` = '%s'  where `nid` = %d ",
+				$center->title,  $name,$description , $nid); 
+			}	
+			break;
+			
+			case 'delete' :
+			if($node->type == 'stores'){
+				$name = $node->title ; 
+				$nid = $node->nid ; 
+				db_query("delete from  {joury_stores} where `nid` = %d " , $nid); 
+			}		
+			break;
+			
+			case 'view' :
+				
+			break ; 		
+		
+		}	
+}
+
+
+
+/**
+* Implementation of hook_jourymenu
+*/
+
+function joury_stores_jourymenu(){
+	return array(
+	'stores',
+	'joury_stores',
+	array('sid' => 'store id','name' => 'name'),
+	array(),
+	'',
+	'',
+	); 	
+}

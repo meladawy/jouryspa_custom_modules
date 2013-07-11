@@ -1,0 +1,5 @@
+; $Id$
+name =  joury register service
+description = control clients registration for services
+core = 6.x 
+package = joury spa

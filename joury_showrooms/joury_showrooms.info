@@ -1,0 +1,5 @@
+; $Id$
+name = joury showrooms
+description = you can use this module to add new showroom and control existing stores
+core = 6.x
+package = joury spa

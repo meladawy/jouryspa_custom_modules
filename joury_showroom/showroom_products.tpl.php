@@ -1,0 +1,91 @@
+<?php
+// $Id$
+
+/**
+* @showrooms : 
+* array of objects..each array element contain  showroom data
+*/
+
+$current_module_path = drupal_get_path('module' , 'joury_showroom') ; 
+$siteurl = url('', array('absolute' => TRUE)) ; 
+$ajax = url('ajax/showroom/products/',array('absolute' => TRUE)) ;
+$number_of_showrooms =  count($showrooms) ; 
+drupal_add_js($current_module_path."/jquery-1.4.3.min.js") ;
+drupal_add_js($current_module_path."/fancybox/jquery.mousewheel-3.0.4.pack.js") ;
+drupal_add_js($current_module_path."/fancybox/jquery.fancybox-1.3.4.pack.js") ;
+drupal_add_js($current_module_path."/js/jquery-ui-1.8.14.custom.min.js") ;
+drupal_add_css($current_module_path."/smoothness/jquery-ui-1.8.14.custom.css") ;
+drupal_add_css($current_module_path."/fancybox/jquery.fancybox-1.3.4.css") ;
+drupal_add_css($current_module_path."/joury_showroom.css") ;
+drupal_add_js($current_module_path."/joury_showroom.js") ;
+drupal_add_js(array('url' => $siteurl) , 'setting'  ); 
+
+if(!empty($_POST['make-request'])){
+	$author = $_POST['author'] ; 
+	$date = $_POST['date'] ; 
+	$showroomid = $_POST['showroomid'] ;
+	$showroomname = _get_showroom_name($showroomid) ;  
+	$storeid = $_POST['request-storeid'] ; 
+	$storename = _get_store_name($storeid) ; 
+	foreach($_POST as $key => $val){
+		if($val == 'on'){
+			$id = substr($key,7,2425) ;
+			$productid_arr[] = $_POST['productid-'.$id] ; 
+			$quantity_arr[] = $_POST['quantity-'.$id] ; 
+			$productname_arr[] = $_POST['productname-'.$id] ; 
+		}	
+	}
+	$number_of_updates = count($productid_arr); 
+	if($number_of_updates == 0){
+		return  ; 	
+	}
+
+	
+	for($m=0 ; $m< $number_of_updates ; $m++){
+		$productid = $productid_arr[$m] ; 
+		$productname = $productname_arr[$m] ; 
+		$quantity = $quantity_arr[$m] ; 
+		
+		if($quantity == 0 && $productid == 0){
+			return ; 
+		}
+		
+		db_query("insert into `joury_showoom_requests`  (`productid`,`productname` ,`quantity`,`showroomid` , `showroomname` ,`status`,`date`,`author` ) 
+		values (%d,'%s',%d,%d,'%s',%d,'%s','%s')",
+		$productid,$productname, $quantity,$showroomid,$showroomname,0,$date,$author) ; 
+	}	
+	drupal_set_message("<div class='message ok' ><center>REQUEST DONE ..</center></div>") ; 
+} // end of post data process
+global $user ; 
+$staff_center = $user->centerdetails ; 
+$m = 0 ; 
+echo "<table id='joury-showroom-showrooms' >" ;
+if(user_access("override centers division")){	
+	for($k=0 ; $k < $number_of_showrooms ; $k++){
+		$m++ ;
+		echo "<tr>" ; 
+			echo "<td id='joury-showroom-showrooms-row'>" ;
+				echo "<div  id='showroom-container' ><a href='$ajax".$showrooms[$k]->sid."' id='showroom' > ".$showrooms[$k]->name." </a></div>"  ; 
+			echo "</td>";
+		echo "<tr>" ;  
+	 }	
+}else{
+	
+	for($k=0 ; $k < $number_of_showrooms ; $k++){
+		if($staff_center == $showrooms[$k]->center){
+			$m++ ;
+			echo "<tr>" ; 
+				echo "<td id='joury-showroom-showrooms-row'>" ;
+					echo "<div  id='showroom-container' ><a href='$ajax".$showrooms[$k]->sid."' id='showroom' > ".$showrooms[$k]->name." </a></div>"  ; 
+				echo "</td>";
+			echo "<tr>" ;  
+		}			
+	}
+}	
+ 
+ echo "</table>" ;
+ 
+ if($m == 0) {
+	drupal_set_message("<div class='message error'><center>NO SHOWROOMS AVAILABLE</center></div>") ;	
+}	 
+ 

@@ -1,0 +1,5 @@
+; $Id$
+name = joury logs
+description = create the schema of logs
+core = 6.x 
+package = joury spa

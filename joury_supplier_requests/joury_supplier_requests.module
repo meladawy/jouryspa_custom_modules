@@ -1,0 +1,399 @@
+<?php
+// $Id$
+
+/**
+* Implementation of hook_jourymenu
+*/
+
+function joury_supplier_requests_menu() {
+	$menus['joury/suppliers-requests'] = array(
+		'title' => t('SUPPLIERS REQUESTS') ,
+		'description' => t('') , 
+		'page callback' => '_suppliers_requests' , 
+		'access arguments' => array('manu- suppliers requests') ,
+		'type' => MENU_NORMAL_ITEM ,  
+	);
+	
+	$menus['ajax/joury/suppliers-requests'] = array(
+		'title' => t('') ,
+		'description' => t('') , 
+		'page callback' => 'ajax_suppliers_requests' , 
+		'access arguments' => array('access content'),
+		'type' => MENU_CALLBACK ,  
+	);
+	$menus['ajax/joury/suppliers-requests/operation'] = array(
+		'title' => t('') ,
+		'description' => t('') , 
+		'page callback' => 'ajax_suppliers_requests_operation' , 
+		'access arguments' => array('access content'),
+		'type' => MENU_CALLBACK ,  
+	);
+
+	return $menus ;
+}
+
+
+/**
+* Implementation of hook_perm()
+*/
+function joury_supplier_requests_perm(){
+	return array("manu- suppliers requests") ;  	
+}	
+
+
+/**
+* Private function for page : joury/suppliers-requests
+*/
+function _suppliers_requests(){	
+	return theme('page_suppliers_requests') ; 
+}	
+
+
+/**
+* Ajax request 
+*/
+
+function ajax_suppliers_requests(){
+
+	
+$module_path =  drupal_get_path('module' , 'joury_supplier_requests') ; 
+$url = url($module_path , array('absolute' => TRUE)) ;
+$siteurl = url('' , array('absolute' => TRUE)) ;
+$true_pic_path =  $url."/true.jpg" ; 
+$false_pic_path =  $url."/false.png" ;
+if($_POST['orderid']){
+$quantity_handle = db_query("select `quantity` from  {joury_requests_from_suppliers} where `id` = %d" ,$_POST['orderid'] )	;
+$quantity_obj = db_fetch_object($quantity_handle) ; 
+$quantity = $quantity_obj->quantity ; 
+}		
+if($_POST['orderid']){
+	$order_data = _get_request_order_content($_POST['orderid']) ; 
+	echo "<form method='POST' action='".$siteurl."/ajax/joury/suppliers-requests/operation' >" ; 
+	echo "<table id='ajax-suppliers-requests-table'>" ; 
+		echo "<tr>" ; 
+
+			echo "<td>" ;
+				echo "<img src='{$true_pic_path}' /> <br/>  <input type='button' href='1' id='row-operation' value='CASH' size='23' />" ; 
+			echo "</td>" ;
+			
+			echo "<td>" ;
+					
+					echo "<select name='update-quantity' id='update-quantity' >" ;
+					echo "<option value=''>QUANTITY</option>" ; 
+					for($m=0 ; $m<$quantity ; $m++){
+						if($m != 0 ){
+						echo "<option value='".$m."'> ".$m."</option>" ; 
+						}	
+					}
+					echo "</select>"; 
+					echo "<input type='hidden' name='exist-quantity' value='".$quantity."' />" ; 
+					echo "<input type='hidden' name='orderid' value='".$_POST['orderid']."' />" ; 
+					if($quantity > 1){
+					echo "<input type='submit' name='update-quantity-submit' id=update-quantity-submit''  value='UPDATE' /> " ; 
+					}
+					
+			echo "</td>" ; 		
+					
+			echo "<td>" ;
+			   echo "<img src='{$false_pic_path}' /> <br/>  <input type='button' href='0' id='row-operation' value='CANCLE' size='23' />" ; 
+			echo "</td>" ; 
+			
+		echo "</tr>" ; 
+		
+		echo "<tr>" ; 
+
+			echo "<td colspan='3'>" ;
+				echo "<strong style='border:2px solid #ccc; padding:5px; border-radius:6px;'>NOTE</strong><br/>" ; 
+				echo '<textarea name="note" rows="3" cols="40"></textarea><br/>' ; 
+			echo "</td>" ;
+					
+		echo "</tr>" ;
+
+		echo "<tr>" ; 
+			echo "<td>" ;
+			echo "</td>" ; 		
+		
+			echo "<td colspan ='1'>" ; 
+				echo "<br/><br/>" ; 
+			echo "</td>" ; 	
+			
+			echo "<td>" ; 
+			echo "</td>" ; 
+			
+		echo "</tr>" ; 
+		
+		echo "<tr>" ; 
+			echo "<td colspan='3' >" ;
+				echo "<strong style='border:2px solid #ccc; padding:5px; border-radius:6px;'>ITEM PRICE BEFORE DISCOUNT:</strong><br/>" ; 
+				echo "<input type='text' id='item-price-bd'  name='item-price-bd' style='text-align:center;'  value='".$order_data->itempricebd."' />" ; 
+			echo "</td>" ;
+		echo "</tr>" ; 		
+		
+		echo "<tr>" ; 
+			echo "<td colspan='3' >" ;
+				echo "<strong style='border:2px solid #ccc; padding:5px; border-radius:6px;'>ITEM PRICE AFTER DISCOUNT:</strong><br/>" ; 
+				echo "<input type='text' id='item-price-ad' name='item-price-ad' style='text-align:center;'  value='".$order_data->itempricead."' />" ; 
+			echo "</td>" ;
+		echo "</tr>" ; 
+		echo "<tr>" ; 	
+			echo "<td colspan='3'>" ;
+				echo "<strong style='border:2px solid #ccc; padding:5px; border-radius:6px;'>DISCOUNT  AMOUNT PER ITEM  (KWD)</strong><br/>" ; 
+				echo "<input type='text' id='discount' name='discounta' style='text-align:center;' value='".$order_data->discounta . "' />" ; 
+			echo "</td>" ;
+			
+					
+		echo "</tr>" ; 			
+		
+	echo "</table>"; 
+	echo "</form>" ; 
+}	
+}
+
+
+/**
+*
+*/
+function ajax_suppliers_requests_operation (){
+	$siteurl = url('' , array('absolute' => TRUE)) ; 
+
+	/*check to see the last date inserted to table -- avoid redundancy*/	
+	$date = date("m/d/Y h:i:s a", $timestamp);
+	$last_date_in_sec = _get_the_date_of_last_inserted_product_in_admin_store();	
+	$current_date = strtotime($date) ; 
+	$diff_time = $current_date - $last_date_in_sec ; 
+	
+	if($diff_time < 2 && !empty($current_date) && !empty($last_date_in_sec)){
+		
+	drupal_goto($siteurl."/joury/suppliers-requests") ; 
+	return ; 	
+	}		
+	
+ 	if(!empty($_POST['update-quantity-submit']) && !empty($_POST['update-quantity']) && isset($_POST['discounta']) && !empty($_POST['item-price-bd'])  && !empty($_POST['item-price-ad'])){
+ 	
+	$orderid = $_POST['orderid'] ; 
+	$quantity =  $_POST['update-quantity'] ;
+	$exist_quantity = $_POST['exist-quantity'] ;
+
+	$item_price_after_discount =  $_POST['item-price-ad'] ; 
+	$item_price_before_discount =  $_POST['item-price-bd'] ; 
+	$discount_amount = $_POST['discounta'] ; 
+	$discount_percent =  ($discount_amount/$item_price_before_discount) * 100 ; 
+	$order_content = _get_request_order_content($orderid) ; // get the order content to add it to the store
+	$total_price_after_discount = $item_price_after_discount * $quantity ; 
+	$total_price_before_discount = $item_price_before_discount * $quantity ; 	
+
+	$newpricead = 	( $order_content->nettotalad ) - (($order_content->nettotalad) / ($order_content->quantity) * $quantity ) ; 
+	$newpricebd = 	( $order_content->nettotalbd ) - (($order_content->nettotalbd) / ($order_content->quantity) * $quantity ) ; 
+	
+	$note = (!empty($_POST['note'])) ? $_POST['note'] : "no note" ; 
+	$timestamp = time();
+	$date = date("m/d/Y h:i:s a", $timestamp);
+	if($quantity < $exist_quantity){
+		db_query("update {joury_requests_from_suppliers}  set `quantity` = `quantity` - %d , `nettotalad` = %f , `nettotalbd` = %f where `id` = %d" 
+		,$quantity ,$newpricead ,$newpricebd ,$orderid ) ;	
+	}		
+				
+				
+	
+
+				$order_content = _get_request_order_content($orderid) ; // get the order content to add it to the store
+				db_query("insert into {joury_requests_from_suppliers_log} (`productid`,`productname`,`supplierid`,`suppliername`,`quantity`
+				,`itempricead`,`itempricebd`,`discountp`,`discounta`,`nettotalad`,`nettotalbd`,`note`,`status`,`date`) values 
+				(%d,'%s',%d,'%s',%d,%f,%f,%f,%f,%f,%f,'%s','%s','%s')",
+				$order_content->productid,$order_content->productname,$order_content->supplierid,$order_content->suppliername,
+				$quantity,$item_price_after_discount,$item_price_before_discount,$discount_percent,
+				$discount_amount,$total_price_after_discount,$total_price_before_discount,$note,'UPDATE',$date) ; 	
+			
+				$totalprice = $quantity * ($item_price_after_discount)  ; 
+				$producerate = _get_rate_of_productid($order_content->productid) ; 
+				$item_sell_price = ((($item_price_after_discount)/100) * $producerate) + ($item_price_after_discount) ; 
+				
+				$price_per_item = $item_price_after_discount  ; 
+				if(_check_product_in_store_admin($order_content->productid)){					
+						$result_handle =  db_query("select * from {joury_store_administration_content} where `productid` = %d " ,$order_content->productid ) ;
+						$result = db_fetch_object($result_handle) ; 
+						$exist_quantity  =  $result->quantity ; 	
+						$exist_price  =  $result->storeprice ;
+						$exist_total_price = $exist_price*$exist_quantity ; 
+						$exist_and_new_quantity =  $exist_quantity + $quantity ; 
+						$exist_and_new_total_price =  $exist_total_price 	+ $totalprice ; 
+						$exist_and_new_unit_price = $exist_and_new_total_price/$exist_and_new_quantity ; 
+						$exist_new_sell_price = ((($exist_and_new_unit_price)/100) * $producerate) + ($exist_and_new_unit_price) ;
+						if((is_float($exist_and_new_quantity) || is_int($exist_and_new_quantity)) && (is_float($exist_and_new_unit_price) || is_int($exist_and_new_unit_price)) && $exist_and_new_quantity != 0 &&  $exist_and_new_unit_price != 0 ){ 
+						db_query("update `joury_store_administration_content` set `quantity` = %f , `storeprice` = %f , `sellprice` = %f where  productid=%d ",$exist_and_new_quantity ,$exist_and_new_unit_price,$exist_new_sell_price,$order_content->productid )	 ; 	
+
+						}							
+				}else{
+					
+
+							//$storename = _get_store_name($storeid) ; 
+							$productname = _get_product_name($order_content->productid);
+							db_query("insert into `joury_store_administration_content` 
+							(`productid`,`productname`,`quantity`, `storeprice`, `sellprice`  ) values 
+							(%d,'%s',%d,%f,%f) " ,
+							$order_content->productid,$order_content->productname,$quantity,
+							$item_price_after_discount,$item_sell_price) ;  		
+
+						
+					
+				}	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	
+	drupal_goto($siteurl."/joury/suppliers-requests") ; 
+	}		// end of update
+	
+	if(!empty($_POST['orderid']) && isset($_POST['discounta']) && !empty($_POST['item-price-bd'])  && !empty($_POST['item-price-ad']) && isset($_POST['choice']) && empty($_POST['update-quantity-submit']) && empty($_POST['update-quantity'])){
+		$choice = $_POST['choice']; 
+		$orderid = $_POST['orderid'];
+		$item_price_after_discount =  $_POST['item-price-ad'] ; 
+		$item_price_before_discount =  $_POST['item-price-bd'] ; 
+		$discount_amount = $_POST['discounta'] ; 
+		$discount_percent =  ($discount_amount/$item_price_before_discount) * 100 ; 
+		$order_content = _get_request_order_content($orderid) ; // get the order content to add it to the store
+		$total_price_after_discount = $item_price_after_discount * $order_content->quantity ; 
+		$total_price_before_discount = $item_price_before_discount * $order_content->quantity ; 
+		$timestamp = time();
+		$date = date("m/d/Y h:i:s a", $timestamp);
+		$note = (!empty($_POST['note'])) ? $_POST['note'] : "no note" ; 
+		if($choice == 1){ // move to showroom administration content
+			_update_request_order_($orderid,$choice) ; //
+			$order_content = _get_request_order_content($orderid) ; // get the order content to add it to the store
+				db_query("insert into `joury_requests_from_suppliers_log` (`productid`,`productname`,`supplierid`,`suppliername`,`quantity`
+				,`itempricead`,`itempricebd`,`discountp`,`discounta`,`nettotalad`,`nettotalbd`,`note`,`status`,`date`) values 
+				(%d,'%s',%d,'%s',%d,%f,%f,%f,%f,%f,%f,'%s','%s','%s')",$order_content->productid,$order_content->productname,$order_content->supplierid,$order_content->suppliername,
+				$order_content->quantity,$item_price_after_discount,$item_price_before_discount,$discount_percent,
+				$discount_amount,$total_price_after_discount,$total_price_before_discount,$note,'SUCCESSFUL',$date) ; 	
+				
+				$totalprice = ($order_content->quantity) * ($item_price_after_discount)  ; 
+				$producerate = _get_rate_of_productid($order_content->productid) ; 
+				$produceprice = _get_sellprice_of_productid($order_content->productid) ; 
+				$item_sell_price = ((($item_price_after_discount)/100) * $producerate) + ($item_price_after_discount) ; 
+				$price_per_item = $item_price_after_discount  ; 
+				if(_check_product_in_store_admin($order_content->productid)){
+						
+						$result_handle =  db_query("select * from {joury_store_administration_content} where `productid` = %d " ,$order_content->productid ) ;
+						$result = db_fetch_object($result_handle) ; 
+						$exist_quantity  =  $result->quantity ; 	
+						$exist_price  =  $result->storeprice ;
+						$exist_total_price = $exist_price*$exist_quantity ; 
+						$exist_and_new_quantity =  $exist_quantity + $order_content->quantity ; 
+						$exist_and_new_total_price =  $exist_total_price 	+ $totalprice ; 
+						$exist_and_new_unit_price = $exist_and_new_total_price/$exist_and_new_quantity ; 
+						$exist_new_sell_price = ((($exist_and_new_unit_price)/100) * $producerate) + ($exist_and_new_unit_price) ;
+						if((is_float($exist_and_new_quantity) || is_int($exist_and_new_quantity)) && (is_float($exist_and_new_unit_price) || is_int($exist_and_new_unit_price)) && $exist_and_new_quantity != 0 &&  $exist_and_new_unit_price != 0 ){ 
+						db_query("update {joury_store_administration_content} set `quantity` = %f , `storeprice` = %f , `sellprice` = %f where  productid=%d ",$exist_and_new_quantity ,$exist_and_new_unit_price,$exist_new_sell_price,$order_content->productid )	 ; 	
+
+						}							
+				}else{
+					
+
+							$productname = _get_product_name($order_content->productid);
+							db_query("insert into {joury_store_administration_content} 
+							(`productid`,`productname`,`quantity`, `storeprice`, `sellprice`  ) values 
+							(%d,'%s',%d,%f,%f) " ,
+							$order_content->productid,$order_content->productname,$order_content->quantity,
+							$item_price_after_discount,$item_sell_price) ;  		
+
+						
+					
+				}		
+				
+				
+				
+				
+		
+		}	
+		if($choice == 0){ // cancle the order
+			_update_request_order_($orderid,$choice) ; 
+			$order_content = _get_request_order_content($orderid) ;
+				db_query("insert into {joury_requests_from_suppliers_log} (`productid`,`productname`,`supplierid`,`suppliername`,`quantity`
+				,`itempricead`,`itempricebd`,`discountp`,`discounta`,`nettotalad`,`nettotalbd`,`note`,`status`,`date`) values 
+				(%d,'%s',%d,'%s',%d,%f,%f,%f,%f,%f,%f,'%s','%s','%s')",$order_content->productname,$order_content->productname,$order_content->supplierid,$order_content->suppliername,
+				$order_content->quantity,$item_price_after_discount,$item_price_before_discount,$discount_percent,
+				$discount_amount,$total_price_after_discount,$total_price_before_discount,$note,'FAILED',$date) ; 	
+		}	
+		return  ;
+	}	
+	
+	drupal_goto($siteurl."/joury/suppliers-requests") ; 
+}		
+
+
+/**
+* Implementation of hook_theme
+*/
+function  joury_supplier_requests_theme(){
+ 	return array(
+ 		'page_suppliers_requests' => array(
+				'template' => 'page_suppliers_requests' , 
+				'arguments' =>  array() , 		
+ 		) ,
+ 	);	
+}	
+
+
+
+/**
+* Private function that return supplier reqeuests
+*/
+
+function _get_suppliers_requests() {
+ $result_handle = db_query("select * from `joury_requests_from_suppliers` where `status` = 0 order by id desc limit 50") ;
+ while ($result_object = db_fetch_object($result_handle)) {
+ 		$result_arr[] = $result_object ; 
+ 	} 
+ 	return $result_arr ; 
+}
+
+/**
+* Private function to get the content of order id 
+*/
+function _get_request_order_content($orderid){
+	$result_handle = db_query("select * from `joury_requests_from_suppliers` where `id` = %d" ,$orderid) ;
+ 	$result_object = db_fetch_object($result_handle) ; 
+ 	return $result_object ; 	
+}	
+
+
+/**
+* Private functoin to update this order
+*/
+function _update_request_order_($orderid,$choice) {
+	if($choice == 1){
+		db_query("update `joury_requests_from_suppliers` set `status` =  %d where `id` = %d" ,1,$orderid )	;
+	}
+	if($choice == 0){
+		db_query("update `joury_requests_from_suppliers` set `status` =  %d where `id` = %d" ,2,$orderid )	;
+	}		
+}
+
+
+/**
+* _get_the_date_of_last_inserted_product_in_admin_store()
+*/
+function _get_the_date_of_last_inserted_product_in_admin_store(){
+	$result_handle = db_query("select `date` from {joury_requests_from_suppliers_log} order by id desc limit 1 ") ; 
+	$result_obj = db_fetch_object($result_handle) ; 
+	$last_date = $result_obj->date; 
+	$last_date_in_sec = strtotime($last_date);
+	return $last_date_in_sec ; 
+}

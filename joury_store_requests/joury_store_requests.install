@@ -1,0 +1,61 @@
+<?php
+// $Id$
+
+/**
+* Implementation of hook_install
+*/
+
+function joury_store_requests_install(){
+ 	drupal_install_schema('joury_store_requests'); 
+}
+
+
+/**
+* Implementation of hook_uninstall
+*/
+
+function joury_store_requests_uninstall(){
+ 	drupal_uninstall_schema('joury_store_requests'); 
+}
+
+
+/**
+* Implementation of hook_schema
+*/
+function joury_store_requests_schema(){
+	$schema['joury_store_requests'] = array(
+	'description' => 'this table control the stores ',
+	'fields' => array(
+		'id' => array('type' => 'serial' , 'unsigned' => TRUE , 'not null' => TRUE,) , 
+		'productid' => array('type' => 'int' , 'unsigned' => TRUE , 'not null' => TRUE, 'default' => 0 , ) ,
+		'productname' => array('type' => 'varchar' ,'length' => 40, 'not null' => TRUE, 'default' => '' , ) ,
+		'quantity' => array('type' => 'int' , 'unsigned' => TRUE , 'not null' => TRUE, 'default' => 0 , ) ,	
+		'storeid' =>array('type' => 'int' , 'unsigned' => TRUE , 'not null' => TRUE, 'default' => 0 , ) ,	
+		'storename' => array('type' => 'varchar' ,'length' => 40, 'not null' => TRUE, 'default' => '' , ) ,				
+		'status' => array('type' => 'int' , 'unsigned' => TRUE , 'not null' => TRUE, 'default' => 0 , ) ,		
+		'date' =>  array('type' => 'varchar' ,'length' => 50, 'not null' => TRUE, 'default' => '' , ) ,
+		'author' =>  array('type' => 'varchar' ,'length' => 50, 'not null' => TRUE, 'default' => '' , ) ,							
+	),
+	'primary key' => array('id'),
+	);
+	
+	$schema['joury_store_requests_status'] = array(
+	'description' => 'this table view stoes status',
+	'fields' => array(
+		'id' => array('type' => 'serial' , 'unsigned' => TRUE , 'not null' => TRUE,) , 
+		'orderid' =>array('type' => 'int' , 'unsigned' => TRUE , 'not null' => TRUE, 'default' => 0 , ) ,
+		'date' => array('type' => 'varchar' ,'length' => 40, 'not null' => TRUE, 'default' => '' , ) ,
+		'storeid' => array('type' => 'int' , 'unsigned' => TRUE , 'not null' => TRUE, 'default' => 0 , ) ,	
+		'storename' => array('type' => 'varchar' ,'length' => 40, 'not null' => TRUE, 'default' => '' , ) ,	
+		'productid' =>array('type' => 'int' , 'unsigned' => TRUE , 'not null' => TRUE, 'default' => 0 , ) ,
+		'productname' => array('type' => 'varchar' ,'length' => 40, 'not null' => TRUE, 'default' => '' , ) ,		
+		'quantity' => array('type' => 'int' , 'unsigned' => TRUE , 'not null' => TRUE, 'default' => 0 , ) ,				
+		'status' => array('type' => 'varchar' ,'length' => 40, 'not null' => TRUE, 'default' => '' , ) ,		
+		'note' =>  array('type' => 'varchar' ,'length' => 255, 'not null' => TRUE, 'default' => '' , ) ,
+		'author' =>  array('type' => 'varchar' ,'length' => 50, 'not null' => TRUE, 'default' => '' , ) ,							
+	),
+	'primary key' => array('id'),
+	);	
+	
+	return $schema ; 
+}

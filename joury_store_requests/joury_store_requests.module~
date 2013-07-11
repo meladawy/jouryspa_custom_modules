@@ -1,0 +1,452 @@
+<?php
+// $Id$
+
+
+/**
+* Implementation of hook_menu
+*/
+
+function joury_store_requests_menu(){
+	$menu['joury/store/requests/lists'] = array(
+		'title' => t('STORE REQUESTS') ,
+		'description' => t('') , 
+		'page callback' => '_joury_store_requests_lists' ,
+		'access arguments' => array('menu- store requests in store admin') ,
+		'type' => MENU_NORMAL_ITEM,
+	);
+	$menu['joury/store/requests/lists/p-m'] = array(
+		'page callback' => '_joury_store_requests_lists_pm' ,
+		'access arguments' => array('access content') ,
+		'type' => MENU_CALLBACK,
+	);
+
+	$menu['joury/store/requests/lists/a-s'] = array(
+		'page callback' => '_joury_store_requests_lists_as' ,
+		'access arguments' => array('access content') ,
+		'type' => MENU_CALLBACK,
+	);	
+	
+	$menu['joury/store/requests/lists/a-s/store/quantity'] = array(
+		'page callback' => '_joury_store_requests_lists_as_store_quantity' ,
+		'access arguments' => array('access content') ,
+		'type' => MENU_CALLBACK,
+	);	
+		
+	
+	$menu['joury/store/requests/lists/p-m/process'] = array(
+		'page callback' => '_joury_store_requests_lists_pm_process' ,
+		'access arguments' => array('access content') ,
+		'type' => MENU_CALLBACK,
+	);
+
+	$menu['joury/store/requests/lists/a-s/process'] = array(
+		'page callback' => '_joury_store_requests_lists_as_process' ,
+		'access arguments' => array('access content') ,
+		'type' => MENU_CALLBACK,
+	);	
+	
+	$menu['joury/store/requests/lists/remove/process'] = array(
+		'page callback' => '_joury_store_requests_lists_remove_process' ,
+		'access arguments' => array('access content') ,
+		'type' => MENU_CALLBACK,
+	);	
+	
+	$menu['joury/store/requests/status'] = array(
+		'page callback' => '_joury_store_requests_status' ,
+		'title' => t('STORE REQESTS STATUS') , 
+		'access arguments' => array('menu- store request status') ,
+		'type' => MENU_NORMAL_ITEM,
+	);		
+	
+	return $menu ; 
+}	
+
+
+
+/**
+* implmentatin of hook_perm
+*/
+function joury_store_requests_perm(){
+	return array("menu- store request status" ) ; 
+}
+
+
+
+function _joury_store_requests_lists(){
+	return theme('theme_joury_store_requests_lists'); 
+}	
+
+
+function _joury_store_requests_status(){
+	return theme('theme_joury_store_requests_status') ; 	
+}	
+
+
+/**
+* Implementation of hook_theme
+*/
+function joury_store_requests_theme(){
+	return array(
+		'theme_joury_store_requests_lists' => array(
+			'template' => 'page_joury_store_requests_lists'	,
+			'arguments' => array('') , 
+		),
+		'theme_joury_store_requests_status' => array(
+			'template' => 'page_joury_store_requests_status'	,
+			'arguments' => array('') , 
+		),
+	);		
+}
+
+
+/**
+* print the store quantity in select view
+*/
+function _joury_store_requests_lists_as_store_quantity(){
+	if(!empty($_POST['from-store-id']) && !empty($_POST['productid']) && !empty($_POST['requested-quantity'])){
+		$storeid = $_POST['from-store-id'] ; 
+		$productid = $_POST['productid'] ;
+		$current_store_quantity = _get_product_quantity_of_storeid($storeid,$productid) ; 
+		echo "<td id='new-quantity-value'>" ; 
+			if(empty($current_store_quantity)){
+				echo "NOT EXIST IN THIS STORE" ; 	
+			}else{
+				echo "<select>" ; 
+					for($k=1; $k <= $current_store_quantity ; $k++){
+						if($k == $_POST['requested-quantity'] ){
+							echo "<option value='$k' selected=''>".$k."</option>" ; 
+						}else{
+							echo "<option value='$k'>".$k."</option>" ; 
+						}		
+					}	
+				echo "</select>" ; 	
+			}		
+		echo "</td>" ; 
+	}	
+}	
+
+/**
+*from project manager row generate
+*/
+function _joury_store_requests_lists_pm(){
+	if(!empty($_POST['request-id']) && !empty($_POST['product-id']) && !empty($_POST['quantity'])){
+		echo "<center><table>"	 ; 
+			echo "<tr id='page-store-table-row-head-subtable'>" ; 
+				echo "<td>" ; 
+					echo "REQUIRED QUANTITY" ; 
+ 				echo "</td>" ; 
+ 				
+ 				echo "<td>" ; 
+					echo "TRANSEFERE QUANTITY" ; 
+ 				echo "</td>" ; 
+ 				
+ 				echo "<td>" ; 
+					echo "OPTION" ; 
+ 				echo "</td>" ; 
+			echo "</tr>" ; 
+			
+			echo "<tr >" ; 
+				echo "<td id='requested-quantity'>" ; 
+					echo $_POST['quantity'] ; 
+ 				echo "</td>" ; 
+ 				
+ 				echo "<td>" ; 
+					$current_quantity = _get_product_quantity_from_admin_store($_POST['product-id']) ; 
+					if(empty($current_quantity)){
+					echo "THIS PRODUCT NOT EXIST IN PRODUCT MANAGER" ; 	
+					}else{
+					echo "<select id='move-quantity'>" ; 
+						for($k=1 ; $k <= $current_quantity ; $k++){
+							if($k == $_POST['quantity']){
+								echo "<option value='$k' selected=''>".$k."</option>" ;
+							}else{	
+								echo "<option value='$k'>".$k."</option>" ; 
+							}
+						}	
+					echo "</select>" ; 	
+					}		
+ 				echo "</td>" ; 
+ 				
+ 				echo "<td>" ; 
+					echo "<input type='submit' value='CASH TO STORE' id='send-product' />" ; 
+ 				echo "</td>" ; 
+			echo "</tr>" ;
+		echo "</table> </center>" ; 
+	}	
+}	
+
+/**
+*from another store row generate
+*/
+function _joury_store_requests_lists_as(){
+		if(!empty($_POST['request-id']) && !empty($_POST['product-id']) && !empty($_POST['quantity'])){
+		echo "<center><table>"	 ; 
+			echo "<tr id='page-store-table-row-head-subtable'>" ; 
+				echo "<td>" ; 
+					echo "REQUIRED QUANTITY" ; 
+ 				echo "</td>" ; 
+ 				
+ 				echo "<td id='from-store-label' >" ; 
+					echo "FROM STORE" ;
+ 				echo "</td>" ; 
+ 				
+ 				echo "<td>" ; 
+					echo "OPTION" ; 
+ 				echo "</td>" ; 
+			echo "</tr>" ; 
+			
+			echo "<tr >" ; 
+				echo "<td id='requested-quantity'>" ; 
+					echo $_POST['quantity'] ; 
+ 				echo "</td>" ; 
+ 				
+ 				echo "<td id='from-store-value'>" ; 
+						_print_select_input_type('from-storeid','joury_stores','name', 'sid', 'select-store') ; 
+ 				echo "</td>" ; 
+ 				
+ 				
+ 				echo "<td>" ; 
+					echo "<input type='submit' value='CASH TO STORE' id='send-product' />" ; 
+ 				echo "</td>" ; 
+			echo "</tr>" ;
+		echo "</table> </center>" ; 
+	}	
+}	
+
+/**
+* project manager process
+*/
+function _joury_store_requests_lists_pm_process(){
+
+	if(!empty($_POST['send-quantity']) && !empty($_POST['request-id']) && !empty($_POST['product-id']) && !empty($_POST['store-id'])){
+		$siteurl = url('', array('absolute' => TRUE)) ; 	
+		$current_page = $siteurl."/joury/store/requests/lists" ; 		
+		$quantity = (int) $_POST['send-quantity'] ; 
+		$requestid = $_POST['request-id'] ; 
+		$productid = (int) $_POST['product-id'] ; 
+		$storeid = $_POST['store-id'] ; 
+		$storename = _get_store_name($storeid) ; 
+		$timestamp = time() ; 
+		$date = date("m/d/Y h:i a",$timestamp) ; 
+		global $user ; 
+
+		$request_data = _get_store_request_by_id($requestid) ; 
+		$current_admin_store_data = _get_product_in_store_admin($productid) ; 
+		$exist_quantity = $current_admin_store_data->quantity ; 
+		$storeprice = (float) $current_admin_store_data->storeprice ;   
+		$rawid = $current_admin_store_data->id ; 
+		$new_total_price = $storeprice * $quantity ; 
+		$productname  = _get_product_name($productid) ;
+	 
+		if((is_int($quantity) || is_float($quantity)) && (is_int($storeprice) || is_float($storeprice)) && $storeprice != 0 && $quantity != 0  ){				
+									
+				}else{
+					echo gettype($quantity) ; 
+					echo "<div class='message error'> BAD INPUT..!! </div>" ;		
+					return ; 
+				}
+	
+		
+
+
+ 				// first update current admin store
+				db_query("update `joury_store_administration_content` set `quantity` = `quantity` - %d where `productid` = %d" 
+				, $quantity,$productid) ; 
+				
+				if($quantity < ($request_data->quantity)){
+				// // update request
+				db_query("update `joury_store_requests` set `quantity` = `quantity` - %d where `id` = %d" 
+				, $quantity,$requestid) ; 
+			 	}elseif($quantity >= ($request_data->quantity) ){
+			 	  db_query("delete from  `joury_store_requests`  where `id` = %d" ,$requestid) ; 
+			 	}else{
+			 	}					
+				
+				// we delete the raw if the quantity = 0
+				$quantity_after_update = _get_quantity_of_store_admin_rawid($rawid) ; 
+				if ($quantity_after_update == 0){
+					db_query("delete from `joury_store_administration_content` where `id` = %d" , $rawid) ; 
+				}
+				// now we are going to update the store that will receive the products
+				if(_check_product_in_store($productid,$storeid)){
+					$result_handle =  db_query("select * from `joury_store` where `productid` = %d and `storeid` = %d " ,$productid , $storeid ) ;
+					$result = db_fetch_object($result_handle) ; 
+					$old_quantity  =  $result->quantity ; 	
+					$old_price  =  $result->price ;
+					$old_total_price = ($old_price * $old_quantity) ; 
+					$old_new_quantity =  ($old_quantity + $quantity) ; 			 
+					$old_new_total_price =  $old_total_price 	+ $new_total_price ; 
+					$old_new_unit_price = $old_new_total_price/$old_new_quantity ; 
+					if((is_float($old_new_quantity) || is_int($old_new_quantity)) && (is_float($old_new_unit_price) || is_int($old_new_unit_price)) && $old_new_quantity != 0 &&  $old_new_unit_price != 0 ){ 
+						db_query("update `joury_store` set `quantity` = %f , `price` = %f where storeid=%d and productid=%d ",$old_new_quantity ,$old_new_unit_price,$storeid,$productid )	 ; 	
+				
+					// insert into store logs {joury_log_store_imports}	
+						db_query("insert into {joury_log_store_imports} (`storeid` , `productid`,`quantity`, `price`, `storename` , `productname`,`author`,`date`) values (%d,%d,%f,%f,'%s','%s','%s','%s') " ,$storeid,$productid,$quantity,$storeprice,$storename,$productname,$user->name,$date ) ;  						
+	      	
+	      		db_query("insert into {joury_store_requests_status} (`productid`,`productname`,`quantity` ,`storeid` , `storename` , `note` , `status` , `author`,`date`,`orderid`)
+					values (%d,'%s',%d,%d,'%s','%s','%s','%s','%s',%d) ",
+					$productid , $productname , $quantity , $storeid , $storename ,  "FROM SUPPLIER DIRECTRLY" , "COMPLETED" , $user->name , $date , $requestid ) ; 					
+					}
+				}else{
+					$storename = _get_store_name($storeid) ; 
+					$productname = _get_product_name($productid);
+					db_query("insert into `joury_store` (`storeid` , `productid`,`quantity`, `price`, `storename` , `productname`) values (%d,%d,%f,%f,'%s','%s') " ,$storeid,$productid,$quantity,$storeprice,$storename,$productname ) ;  	
+					
+					
+					// insert into store logs {joury_log_store_imports}	
+					db_query("insert into {joury_log_store_imports} (`storeid` , `productid`,`quantity`, `price`, `storename` , `productname`,`author`,`date`) values (%d,%d,%f,%f,'%s','%s','%s','%s') " ,$storeid,$productid,$quantity,$storeprice,$storename,$productname,$user->name,$date ) ;  		
+		 	
+	      		db_query("insert into {joury_store_requests_status} (`productid`,`productname`,`quantity` ,`storeid` , `storename` , `note` , `status` , `author`,`date`,`orderid`)
+					values (%d,'%s',%d,%d,'%s','%s','%s','%s','%s',%d) ",
+					$productid , $productname , $quantity , $storeid , $storename ,  "FROM SUPPLIER DIRECTRLY" , "COMPLETED" , $user->name , $date , $requestid) ; 		 	
+		 		}
+			
+	}
+}	
+
+
+/**
+* send product from store to store process
+*/
+function _joury_store_requests_lists_as_process(){
+
+	if(!empty($_POST['send-quantity']) && !empty($_POST['request-id']) && !empty($_POST['product-id']) && !empty($_POST['to-store-id']) && !empty($_POST['from-store-id'])){
+		$siteurl = url('', array('absolute' => TRUE)) ; 	
+		$current_page = $siteurl."/joury/store/requests/lists" ; 		
+		$quantity = (int) $_POST['send-quantity'] ; 
+		$requestid = $_POST['request-id'] ; 
+		$productid = (int) $_POST['product-id'] ; 
+		$tostoreid = $_POST['to-store-id'] ; 
+		$fromstoreid =  $_POST['from-store-id'] ; 
+		$tostorename = _get_store_name($tostoreid) ; 
+		$fromstorename = _get_store_name($fromstoreid) ; 
+		$timestamp = time() ; 
+		$date = date("m/d/Y h:i a",$timestamp) ; 
+		$request_data = _get_store_request_by_id($requestid) ; 
+		$productname  = _get_product_name($productid) ;
+		global $user ; 
+
+		$tostoreproduct_data = _get_product_from_store($tostoreid,$productid) ; 
+		$tostoreproduct_quantity = $tostoreproduct_data->quantity ;
+		
+		$fromstoreproduct_data = _get_product_from_store($fromstoreid,$productid) ; 		
+		$fromstoreprice = $fromstoreproduct_data->price ; 
+		$new_total_price = $fromstoreprice * $quantity ; 
+
+
+				if($quantity < ($request_data->quantity)){
+				// // update request
+				db_query("update `joury_store_requests` set `quantity` = `quantity` - %d where `id` = %d" 
+				, $quantity,$requestid) ; 
+			 	}elseif($quantity >= ($request_data->quantity) ){
+			 	  db_query("delete from  `joury_store_requests`  where `id` = %d" ,$requestid) ; 
+			 	}else{
+			 	}		
+
+
+
+		if(empty($tostoreproduct_data)){
+			
+					db_query("insert into {joury_store} (`storeid` , `productid`,`quantity`, `price`, `storename` , `productname`) values (%d,%d,%f,%f,'%s','%s') " ,$tostoreid,$productid,$quantity,$fromstoreprice,$tostorename,$productname ) ;  	
+					db_query("update {joury_store} set `quantity` = `quantity` - %d where `productid` = %d and `storeid` = %d " , $quantity,$productid ,$fromstoreid) ; 
+	      		$fromstoreproduct_data = _get_product_from_store($fromstoreid,$productid) ; 
+	      		if($fromstoreproduct_data->quantity == 0){
+	      			db_query("delete from {joury_store} where `storeid` =  %d and `productid` =  %d" ,$fromstoreid,$productid ) ; 
+	      		}
+	      		db_query("insert into {joury_store_requests_status} (`productid`,`productname`,`quantity` ,`storeid` , `storename` , `note` , `status` , `author`,`date`,`orderid`)
+					values (%d,'%s',%d,%d,'%s','%s','%s','%s','%s',%d) ",
+					$productid , $productname , $quantity , $tostoreid , $tostorename ,  "FROM STORE {".$fromstorename."}" , "COMPLETED" , $user->name , $date , $requestid) ; 
+					db_query("insert into {joury_log_store_imports} (`storeid` , `productid`,`quantity`, `price`, `storename` , `productname`,`author`,`date`) values (%d,%d,%f,%f,'%s','%s','%s','%s') " ,$tostoreid,$productid,$quantity,$fromstoreprice,$tostorename,$productname,$user->name,$date ) ;  						
+		}else{
+					$result_handle =  db_query("select * from `joury_store` where `productid` = %d and `storeid` = %d " ,$productid , $tostoreid ) ;
+					$result = db_fetch_object($result_handle) ; 
+					$old_quantity  =  $result->quantity ; 	
+					$old_price  =  $result->price ;
+					$old_total_price = ($old_price * $old_quantity) ; 
+					$old_new_quantity =  ($old_quantity + $quantity) ; 			 
+					$old_new_total_price =  $old_total_price 	+ $new_total_price ; 
+					$old_new_unit_price = $old_new_total_price/$old_new_quantity ; 
+					if((is_float($old_new_quantity) || is_int($old_new_quantity)) && (is_float($old_new_unit_price) || is_int($old_new_unit_price)) && $old_new_quantity != 0 &&  $old_new_unit_price != 0 ){ 
+						db_query("update `joury_store` set `quantity` = %f , `price` = %f where storeid=%d and productid=%d ",$old_new_quantity ,$old_new_unit_price,$tostoreid,$productid )	 ; 	
+						db_query("update {joury_store} set `quantity` = `quantity` - %d where `productid` = %d and `storeid` = %d " , $quantity,$productid ,$fromstoreid) ; 
+					// insert into store logs {joury_log_store_imports}	
+						db_query("insert into {joury_log_store_imports} (`storeid` , `productid`,`quantity`, `price`, `storename` , `productname`,`author`,`date`) values (%d,%d,%f,%f,'%s','%s','%s','%s') " ,$tostoreid,$productid,$quantity,$fromstoreprice,$tostorename,$productname,$user->name,$date ) ;  						
+	      	   	db_query("insert into {joury_store_requests_status} (`productid`,`productname`,`quantity` ,`storeid` , `storename` , `note` , `status` , `author`,`date`,`orderid`)
+					   values (%d,'%s',%d,%d,'%s','%s','%s','%s','%s',%d) ",
+					   $productid , $productname , $quantity , $tostoreid , $tostorename ,  "FROM STORE {".$fromstorename."}" , "COMPLETED" , $user->name , $date , $requestid) ; 				
+					}
+		}		 
+	}		
+}	
+
+
+
+/**
+* remove request process
+*/
+function _joury_store_requests_lists_remove_process(){
+  if(!empty($_POST['note']) && !empty($_POST['request-id']) && !empty($_POST['product-id'])  && !empty($_POST['store-id'])){
+  	$request_id = $_POST['request-id'] ; 
+  	$request_data = _get_store_request_by_id($request_id) ; 
+  	$quantity  = $request_data->quantity ; 
+  	$product_id = $_POST['product-id'] ;
+  	$product_name = _get_product_name($product_id) ;
+  	$store_id = $_POST['store-id'] ;
+  	$store_name = _get_store_name($store_id) ; 
+  	$note = $_POST['note']; 
+   $timestamp = time() ; 
+	$date = date("m/d/Y h:i a",$timestamp) ; 
+	$status = 'CANCELED' ; 
+	global $user ;  
+	db_query("insert into {joury_store_requests_status} (`productid`,`productname`,`quantity` ,`storeid` , `storename` , `note` , `status` , `author`,`date`,`orderid`)
+	values (%d,'%s',%d,%d,'%s','%s','%s','%s','%s',%d) ",
+	$product_id , $product_name , $quantity , $store_id , $store_name ,  $note , $status , $user->name , $date , $request_id) ; 
+   db_query("delete from {joury_store_requests} where `id`  =  %d" ,$request_id ) ; 
+  }	
+}	
+
+
+/**
+* Private function to get store requests
+*/
+
+function _get_store_requests() {
+	$result_handle = db_query("select * from `joury_store_requests` where `status` = 0 order by id desc limit 50") ;
+ while ($result_object = db_fetch_object($result_handle)) {
+ 		$result_arr[] = $result_object ; 
+ 	} 
+ return $result_arr ; 
+}	
+
+
+/**
+* Private function to get store requests
+*/
+
+function _get_store_request_by_id($rid) {
+	$result_handle = db_query("select * from `joury_store_requests` where `id` = %d" , $rid) ;
+ 	$result_object = db_fetch_object($result_handle) ; 
+ 	return $result_object ; 	
+}	
+
+
+/**
+* get store product quantity
+*/
+function _get_product_quantity_of_storeid($storeid,$productid){
+	$result_handle = db_query("select `quantity` from `joury_store` where `storeid` = %d and `productid` =  %d" , $storeid, $productid) ;
+ 	$result_object = db_fetch_object($result_handle) ; 
+ 	return $result_object->quantity ; 	
+}	
+
+/**
+* get store requests status
+*/
+function _get_store_requests_status(){
+	$result_handle = db_query("select * from {joury_store_requests_status}  order by id desc limit 20") ;
+ 	while ($result_object = db_fetch_object($result_handle)) {
+ 		$result_arr[] = $result_object ; 
+ 	} 
+ 	return $result_arr ; 	
+}	
+

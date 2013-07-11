@@ -1,0 +1,55 @@
+<?php
+// $Id$
+
+
+/**
+* Implementation of hook_nodeapi
+*/
+
+function joury_size_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL){
+	switch($op){
+			case 'insert' :
+			if($node->type == 'size'){
+				$name = $node->title ; 
+				$nid = $node->nid ; 
+				db_query("insert into {joury_size} (`nid` , `bodyname`)  values (%d , '%s')" , $nid, $name); 
+			}		
+			break; 		
+			
+			case 'update' :
+			if($node->type == 'size'){
+				$name = $node->title ; 
+				$nid = $node->nid ; 
+				db_query("update  {joury_size} set  `bodyname` = '%s' where `nid` = %d " ,  $name,$nid); 
+			}		
+			break;
+			
+			case 'delete' :
+			if($node->type == 'size'){
+				$name = $node->title ; 
+				$nid = $node->nid ; 
+				db_query("delete from  {joury_size} where `nid` = %d " , $nid); 
+			}		
+			break;
+		
+		
+		}	
+}
+
+
+
+
+/**
+* Implementation of hook_jourymenu
+*/
+
+function joury_size_jourymenu(){
+	return array(
+	'size',
+	'joury_size',
+	array('id' => 'ID','bodyname' => 'NAME'),
+	array(),
+	'',
+	'',
+	); 	
+}

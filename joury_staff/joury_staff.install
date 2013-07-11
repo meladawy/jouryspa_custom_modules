@@ -1,0 +1,73 @@
+<?php
+// $Id$
+
+/**
+* Implementation of hook_install
+*/
+
+function joury_staff_install(){
+	drupal_install_schema('joury_staff') ; 
+}
+
+
+
+/**
+* Implementation of hook_uninstall
+*/
+
+function joury_staff_uninstall(){
+	drupal_uninstall_schema('joury_staff') ; 
+	$result_handler = db_query("select nid from {node} where `type` = '%s' " , "staff") ;
+	while($result_obj  = db_fetch_object($result_handler)) {
+		node_delete($result_obj->nid) ; 	
+	}	
+}
+
+
+/**
+* Implementation of hook_schema
+*/
+
+function joury_staff_schema(){
+	$schema['joury_staff'] = array(
+		'description' => 'this table contain staff data and information' , 
+		'fields' => array(
+			'sid' => array('type' => 'serial' , 'unsigned' => TRUE, 'not null' => TRUE,) ,
+			'nid' => array('type' => 'int' , 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0, ) ,
+			'firstname' => array('type' => 'varchar', 'length' => 32 , 'default' => '',),
+			'lastname' => array('type' => 'varchar', 'length' => 32 , 'default' => '',),
+			'employee_id' => array('type' => 'int' , 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0, ) ,
+			'salary' => array('type' => 'float' , 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0.0, ) ,
+			'weekend' => array('type' => 'int' , 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0, ) ,
+			'birthdate' => array('type' => 'varchar', 'length' => 32 , 'default' => '',),
+			'attend_time' => array('type' => 'varchar', 'length' => 32 , 'default' => '',),
+			'leave_time' => array('type' => 'varchar', 'length' => 32 , 'default' => '',),
+			'joiningdate' => array('type' => 'varchar', 'length' => 32 , 'default' => '',),
+			'civil_id' => array('type' => 'varchar', 'length' => 32 , 'default' => '',),
+			'phone' => array('type' => 'varchar', 'length' => 32 , 'default' => '',),
+			'mobile' => array('type' => 'varchar', 'length' => 32 , 'default' => '',),
+			'email' => array('type' => 'varchar', 'length' => 40 , 'default' => '',),		
+			'address' => array('type' => 'varchar', 'length' => 150 , 'default' => '',),
+		),
+		 'primary key' => array('sid'),
+	);
+	$schema['joury_staff_products'] = array(
+		'description' => 'this table control the showrooms ',
+		'fields' => array(
+			'id' => array('type' => 'serial' , 'unsigned' => TRUE , 'not null' => TRUE,) , 
+			'staffid' => array('type' => 'int' , 'unsigned' => TRUE , 'not null' => TRUE, 'default' => 0 , ) ,
+			'staffname' => array('type' => 'varchar' ,'length' => 40, 'not null' => TRUE, 'default' => '' , ) ,
+			'productid' => array('type' => 'int' , 'unsigned' => TRUE , 'not null' => TRUE, 'default' => 0 , ) ,	
+			'productname' => array('type' => 'varchar' ,'length' => 40, 'not null' => TRUE, 'default' => '' , ) ,	
+			'date' => array('type' => 'varchar' ,'length' => 40, 'not null' => TRUE, 'default' => '' , ) ,	
+			'storeid' => array('type' => 'int' , 'unsigned' => TRUE , 'not null' => TRUE, 'default' => 0 , ) ,	
+			'storename' => array('type' => 'varchar' ,'length' => 40, 'not null' => TRUE, 'default' => '' , ) ,	
+			'quantity' => array('type' => 'float' , 'unsigned' => TRUE , 'not null' => TRUE, 'default' => 0.0 , ) ,	
+			'price' => array('type' => 'float' , 'unsigned' => TRUE , 'not null' => TRUE, 'default' => 0.0 , ) ,	
+
+		), 
+		'primary key' => array('id'), 
+		);
+	return $schema ; 
+
+}

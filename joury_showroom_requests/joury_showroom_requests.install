@@ -1,0 +1,45 @@
+<?php
+// $Id$
+
+/**
+* Implementation of hook_install
+*/
+
+function joury_showroom_requests_install(){
+ 	drupal_install_schema('joury_showroom_requests'); 
+}
+
+
+/**
+* Implementation of hook_uninstall
+*/
+
+function joury_showroom_requests_uninstall(){
+ 	drupal_uninstall_schema('joury_showroom_requests'); 
+}
+
+
+/**
+* Implementation of hook_schema
+*/
+function joury_showroom_requests_schema(){
+	$schema['joury_showoom_requests'] = array(
+	'description' => 'this table control the showrooms ',
+	'fields' => array(
+		'id' => array('type' => 'serial' , 'unsigned' => TRUE , 'not null' => TRUE,) , 
+		'productid' => array('type' => 'int' , 'unsigned' => TRUE , 'not null' => TRUE, 'default' => 0 , ) ,
+		'productname' => array('type' => 'varchar' ,'length' => 40, 'not null' => TRUE, 'default' => '' , ) ,
+		'quantity' => array('type' => 'int' , 'unsigned' => TRUE , 'not null' => TRUE, 'default' => 0 , ) ,	
+		'showroomid' =>array('type' => 'int' , 'unsigned' => TRUE , 'not null' => TRUE, 'default' => 0 , ) ,	
+		'showroomname' => array('type' => 'varchar' ,'length' => 40, 'not null' => TRUE, 'default' => '' , ) ,	
+		'storeid' =>array('type' => 'int' , 'unsigned' => TRUE , 'not null' => TRUE, 'default' => 0 , ) ,	
+		'storename' => array('type' => 'varchar' ,'length' => 40, 'not null' => TRUE, 'default' => '' , ) ,			
+		'status' => array('type' => 'int' , 'unsigned' => TRUE , 'not null' => TRUE, 'default' => 0 , ) ,		
+		'date' =>  array('type' => 'varchar' ,'length' => 50, 'not null' => TRUE, 'default' => '' , ) ,
+		'author' =>  array('type' => 'varchar' ,'length' => 50, 'not null' => TRUE, 'default' => '' , ) ,							
+	),
+	'primary key' => array('id'),
+	);
+	
+	return $schema ; 
+}

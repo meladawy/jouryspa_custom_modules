@@ -1,0 +1,11 @@
+.node-form .text  {
+
+}
+
+.form-item {
+float: left !important ; 	
+}	
+
+#edit-title-wrapper{
+float: left !important ; 		
+}	

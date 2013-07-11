@@ -1,0 +1,38 @@
+<?php
+// $Id$
+
+
+$current_module_path = drupal_get_path('module' , 'joury_bill') ; 
+$siteurl = url('', array('absolute' => TRUE)) ; 
+drupal_add_js($current_module_path."/jquery-1.4.3.min.js") ;
+drupal_add_js($current_module_path."/fancybox/jquery.mousewheel-3.0.4.pack.js") ;
+drupal_add_js($current_module_path."/fancybox/jquery.fancybox-1.3.4.pack.js") ;
+drupal_add_js($current_module_path."/js/jquery-ui-1.8.14.custom.min.js") ;
+drupal_add_css($current_module_path."/smoothness/jquery-ui-1.8.14.custom.css") ;
+drupal_add_css($current_module_path."/fancybox/jquery.fancybox-1.3.4.css") ;
+drupal_add_css($current_module_path."/jourybill.css") ;
+drupal_add_css($current_module_path."/print.css") ;
+drupal_add_js($current_module_path."/joury_bill.js") ;
+drupal_add_js($current_module_path."/jquery.printElement.js") ;
+drupal_add_js(array('url' => $siteurl) , 'setting'  ); 
+$clients =  _get_bill_users() ; 
+$number_of_clients =  count($clients) ; 
+$ajax = url('ajax/bill/client/',array('absolute' => TRUE)) ;
+if($number_of_clients > 0){
+echo "<table id='joury-bill-bills' >" ;
+$arg2 = arg(2) ; 
+if(!empty($arg2)){
+	drupal_add_js( array('clientid' => $arg2 ), 'setting') ;	
+}	
+for($k=0 ; $k < $number_of_clients ; $k++){
+	echo "<tr>" ; 
+		echo "<td id='joury-bill-bills-row'>" ;
+			echo "<div  id='bill-container' ><a href='$ajax".$clients[$k]->clientid."' id='bill' > ".$clients[$k]->clientname." </a></div>"  ; 
+		echo "</td>";
+	echo "<tr>" ;  
+ }	
+ 
+ echo "</table>" ;
+ }else{
+ 	echo "<div class='message error'><center>NO BILLS</center></div>" ; 
+ }	

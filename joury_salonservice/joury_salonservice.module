@@ -1,0 +1,146 @@
+<?php
+// $Id$
+
+
+/**
+* Implementation of hook_nodeapi
+*/
+
+function joury_salonservice_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL){
+	switch($op){		
+
+	
+			case 'insert' :
+			if($node->type == 'salonservice'){
+				$name = $node->title ; 
+				$nid = $node->nid ;
+				$sessionsnum = $node->field_sessionsnum[0]['value'] ; 			
+			 	$price = $node->field_salonserviceprice[0]['value'] ;  
+				$category = $node->field_salonservicecategory[0]['nid'] ;
+				$center = node_load($node->field_salonservicecenter[0]['nid']) ;
+				if(!empty($category)){ 
+				$category_name_node = node_load($category ) ; 
+				$category_name = $category_name_node->title ; 
+				}
+				$category_name = !empty($category_name) ? $category_name : 'NOT EXIST' ; 
+				$size_array = $node->field_salonservicesize ; 
+				$number_of_size = count($size_array) ; 
+				if($number_of_size>0 && !empty($size_array[0]['nid'])){
+					$size = '' ;
+					for($k=0 ; $k < $number_of_size ; $k++){
+						$size .= " , ".$size_array[$k]['nid'] ; 	
+					}
+					
+					$size .= " , " ; 		
+				}else{
+					$size = '' ;	
+				}	
+				$result_handle = db_query("select count(*) from {node} where title = '%s'" , $node->title)	 ; 			
+				$result = db_fetch_array($result_handle) ; 
+				$number_of_nodes = $result['count(*)'] ; 
+				if($number_of_nodes == 1){ 
+				db_query("insert into {joury_salonservice} (`center`,`nid` , `name` , `price`, `category_nid`,`category_name`,`sessionsnum`,`size_nid`) 
+				 values ('%s' , %d , '%s' , %f , %d,'%s', %d,'%s')" ,$center->title, $nid, $name, $price , $category,$category_name, $sessionsnum,$size); 
+				}elseif($number_of_nodes == 2){
+					node_delete($node->nid) ; 	
+					drupal_set_message("<div class='message error'><center>SORRY .. THIS SERVICE EXIST BEFORE..!!</center></div>") ; 
+					drupal_goto('node/add/salonservice');
+				}else{
+				
+				}			 
+							 
+			}			
+			break; 		
+			
+			case 'update' : 
+			if($node->type == 'salonservice'){
+				$name = $node->title ; 
+				$nid = $node->nid ;
+				$sessionsnum = $node->field_sessionsnum[0]['value'] ; 
+			 	$price = $node->field_salonserviceprice[0]['value'] ;  
+				$category = $node->field_salonservicecategory[0]['nid'] ;
+				$center = node_load($node->field_salonservicecenter[0]['nid']) ; 
+				if(!empty($category)){ 
+				$category_name_node = node_load($category ) ; 
+				$category_name = $category_name_node->title ; 
+				}
+				$category_name = !empty($category_name) ? $category_name : 'NOT EXIST' ; 
+				$size_array = $node->field_salonservicesize ; 
+				$number_of_size = count($size_array ) ; 
+				if($number_of_size>0 && !empty($size_array[0]['nid'])){
+					$size = '' ;
+					for($k=0 ; $k < $number_of_size ; $k++){
+						$size .= " , ".$size_array[$k]['nid'] ; 	
+					}
+					
+					$size .= " , " ; 		
+				}else{
+					$size = '' ;	
+				}
+				
+				db_query("update  {joury_salonservice} set `center` = '%s', `sessionsnum` = %d, `name` = '%s' ,`price` = %f , `category_nid` = %d ,`category_name` = '%s' ,`size_nid` = '%s' where `nid` = %d ",
+				$center->title,  $sessionsnum,  $name ,$price ,$category,$category_name,$size , $nid); 
+			}	
+			break;
+			
+			case 'delete' :
+			if($node->type == 'salonservice'){
+				$name = $node->title ; 
+				$nid = $node->nid ; 
+				db_query("delete from  {joury_salonservice} where `nid` = %d " , $nid); 
+			}		
+			break;
+			
+			case 'view' :
+
+			break ; 		
+		
+		}	
+}
+
+
+
+/**
+* Implementation of hook_jourymenu
+*/
+
+function joury_salonservice_jourymenu(){
+	return array(
+	'services',
+	'joury_salonservice',
+	array('sid' => 'id' ,'name' => 'name'),
+	array('tablename' => 'joury_salonservice' , 'fields' => array('name' => 'NAME' ,'category_name' => 'CATEGORY NAME', 'sid' => 'SERVICE ID'),) , 
+	'',
+	'',
+	); 	
+}
+
+
+
+
+/**
+* _get_service_by_name
+*/
+
+function _get_service_by_name($servicename){
+	$result_handle = db_query("select * from {joury_salonservice} where `name` = '%s'" ,$servicename ) ; 
+	while($result_obj = db_fetch_object($result_handle)){
+		$result[] = $result_obj ; 	
+	}
+	return $result ; 
+}	
+
+
+
+/**
+* get name by id
+*/
+/**
+* _get_service_by_name
+*/
+
+function _get_service_by_id($serviceid){
+	$result_handle = db_query("select * from {joury_salonservice} where `sid` = %d " ,$serviceid ) ; 
+	$result_obj = db_fetch_object($result_handle) ; 
+	return $result_obj; 
+}	

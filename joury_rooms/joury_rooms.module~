@@ -1,0 +1,67 @@
+<?php
+// $Id$
+
+
+/**
+* Implementation of hook_nodeapi
+*/
+
+function joury_rooms_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL){
+	switch($op){
+			case 'insert' :
+			if($node->type == 'rooms'){
+				$name = $node->title ; 
+				$nid = $node->nid ; 
+				db_query("insert into {joury_rooms} (`nid` , `roomname`)  values (%d , '%s')" , $nid, $name); 
+			}		
+			break; 		
+			
+			case 'update' :
+			if($node->type == 'rooms'){
+				$name = $node->title ; 
+				$nid = $node->nid ; 
+				db_query("update  {joury_rooms} set  `roomname` = '%s'   where `nid` = %d " ,  $name ,$nid); 
+			}		
+			break;
+			
+			case 'delete' :
+			if($node->type == 'rooms'){
+				$name = $node->title ; 
+				$nid = $node->nid ; 
+				db_query("delete from  {joury_rooms} where `nid` = %d " , $nid); 
+			}		
+			break;
+		
+		
+		}	
+}
+
+
+
+
+/**
+* Implementation of hook_jourymenu
+*/
+
+function joury_rooms_jourymenu(){
+	return array(
+	'rooms',
+	'joury_rooms',
+	array('id' => 'ID','roomname' => 'ROOM NAME'),
+	array(),
+	'',
+	'',
+	); 	
+}
+
+
+/**
+* Get All Rooms
+*/
+
+function _get_all_rooms(){
+	$result_handle = db_query("select * from {joury_rooms}") ; 
+	while($result_obj = db_fetch_object($result_handle)){
+		$result[] = $result_obj->roomname ; 	
+	}		
+}	

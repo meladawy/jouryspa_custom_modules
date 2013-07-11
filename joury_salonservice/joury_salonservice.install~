@@ -1,0 +1,42 @@
+<?php
+// $Id$
+
+/**
+* Implementation of hook_install
+*/
+function joury_salonservice_install(){
+ 	drupal_install_schema('joury_salonservice'); 
+}
+
+
+/**
+* Implementation of hook_uninstall
+*/
+function joury_salonservice_uninstall(){
+ 	drupal_uninstall_schema('joury_salonservice'); 
+}
+
+
+/**
+* Implementation of hook_schema
+*/
+function joury_salonservice_schema(){
+	$schema['joury_salonservice'] = array(
+		'description' => 'this table control the salon services ',
+		'fields' => array(
+			'sid' => array('type' => 'serial' , 'unsigned' => TRUE , 'not null' => TRUE,) , 
+			'nid' => array('type' => 'int' , 'unsigned' => TRUE , 'not null' => TRUE, 'default' => 0 , ) ,		
+			'name' => array('type' => 'varchar'  ,'length' => 40, 'not null' => TRUE, 'default' => '', ) ,
+			'sessionsnum' =>  array('type' => 'int'  ,'length' => 10, 'not null' => TRUE, 'default' => 0, ) ,	
+			'category_nid' => array('type' => 'int' , 'unsigned' => TRUE , 'not null' => TRUE, 'default' => 0 , ) ,	
+			'category_name' => array('type' => 'varchar'  ,'length' => 40, 'not null' => TRUE, 'default' => '', ) ,
+			'category_name' => array('type' => 'varchar'  ,'length' => 40, 'not null' => TRUE, 'default' => '', ) ,
+			'price' => array('type' => 'float'  ,'length' => 10, 'not null' => TRUE, 'default' => 0.0, ) ,	
+			'size_nid' => array('type' => 'text'  , 'not null' => TRUE, 'default' => '', ) ,
+		), 
+		'primary key' => array('sid'),
+	
+	);
+	
+	return $schema ; 
+}

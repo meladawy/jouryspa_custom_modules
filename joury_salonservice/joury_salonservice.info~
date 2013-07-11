@@ -1,0 +1,5 @@
+; $Id$
+name = add salon service
+description = by this module you can add service to salon easly
+core = 6.x 
+package = joury spa

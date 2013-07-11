@@ -1,0 +1,37 @@
+<?php
+// $Id$
+
+/**
+* Implementation of hook_install
+*/
+function joury_sc_install(){
+ 	drupal_install_schema('joury_sc'); 
+}
+
+
+/**
+* Implementation of hook_uninstall
+*/
+function joury_sc_uninstall(){
+ 	drupal_uninstall_schema('joury_sc'); 
+}
+
+
+/**
+* Implementation of hook_schema
+*/
+function joury_sc_schema(){
+	$schema['joury_sc'] = array(
+		'description' => 'this table control the services categories like...add spa..add salon...etc',
+		'fields' => array(
+			'scid' => array('type' => 'serial' , 'unsigned' => TRUE , 'not null' => TRUE,) , 
+			'nid' => array('type' => 'int' , 'unsigned' => TRUE , 'not null' => TRUE, 'default' => 0 , ) ,		
+			'name' => array('type' => 'varchar'  ,'length' => 40, 'not null' => TRUE, 'default' => '', ) ,	
+			'description' => array('type' => 'varchar'  ,'length' => 240, 'not null' => TRUE, 'default' => '', ) ,	
+		), 
+		'primary key' => array('scid'),
+	
+	);
+	
+	return $schema ; 
+}

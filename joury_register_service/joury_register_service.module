@@ -1,0 +1,1206 @@
+<?php
+// $Id$
+
+
+/**
+* Implementation of hook_menu
+*/
+
+function joury_register_service_menu(){
+	$menu['joury/register/service/spa'] =  array(
+		'title' => t('REGISTER SPA SERVICE') , 
+		'page callback' => '_page_joury_register_service_spa' , 
+		'access arguments' => array("menu- spa") , 
+		'type' => MENU_NORMAL_ITEM ,
+	);
+	
+	$menu['joury/register/service/salon'] =  array(
+		'title' => t('REGISTER SALON SERVICE') , 
+		'page callback' => '_page_joury_register_service_salon' , 
+		'access arguments' => array("menu- salon") , 
+		'type' => MENU_NORMAL_ITEM ,
+	);
+	
+	$menu['joury/register/service/home'] =  array(
+		'title' => t('REGISTER HOME SERVICE') , 
+		'page callback' => '_page_joury_register_service_home' , 
+		'access arguments' => array('menu- home') , 
+		'type' => MENU_NORMAL_ITEM ,
+	);
+	$menu['joury/register/service/contract'] =  array(
+		'title' => t('JOURY SPA') , 
+		'page callback' => '_page_joury_register_service_contract' , 
+		'access arguments' => array("page- joury-register-service-contract") , 
+		'type' => MENU_CALLBACK ,
+	);	
+	
+	$menu['joury/register/service/autocomplete/clientname'] = array(
+		'page callback' => '_joury_register_service_autocomplete_clientname' , 
+		'access arguments' => array('access content'),
+		'type' => MENU_CALLBACK , 
+	) ;
+	
+	$menu['joury/register/service/autocomplete/staffname'] = array(
+		'page callback' => '_joury_register_service_autocomplete_staffname' , 
+		'access arguments' => array('access content'),
+		'type' => MENU_CALLBACK , 
+	) ;
+	
+	$menu['joury/register/service/autocomplete/clientphone'] = array(
+		'page callback' => '_joury_register_service_autocomplete_clientphone' , 
+		'access arguments' => array('access content'),
+		'type' => MENU_CALLBACK , 
+	) ;
+
+	$menu['joury/register/service/autocomplete/services/spa'] = array(
+		'page callback' => '_joury_register_service_autocomplete_services_spa' , 
+		'access arguments' => array('access content'),
+		'type' => MENU_CALLBACK , 
+	) ;
+	
+	$menu['joury/register/service/autocomplete/services/salon'] = array(
+		'page callback' => '_joury_register_service_autocomplete_services_salon' , 
+		'access arguments' => array('access content'),
+		'type' => MENU_CALLBACK , 
+	) ;
+	$menu['joury/register/service/autocomplete/services/home'] = array(
+		'page callback' => '_joury_register_service_autocomplete_services_home' , 
+		'access arguments' => array('access content'),
+		'type' => MENU_CALLBACK , 
+	) ;
+	
+	$menu['joury/register/service/clientname/result'] = array(
+		'page callback' => '_joury_register_service_clientname_result' , 
+		'access arguments' => array('access content'),
+		'type' => MENU_CALLBACK , 
+	) ;
+	
+	$menu['joury/register/service/clientphone/result'] = array(
+		'page callback' => '_joury_register_service_clientphone_result' , 
+		'access arguments' => array('access content'),
+		'type' => MENU_CALLBACK , 
+	) ;
+	
+	$menu['joury/register/service/services/result'] = array(
+		'page callback' => '_joury_register_service_services_result' , 
+		'access arguments' => array('access content'),
+		'type' => MENU_CALLBACK , 
+	) ;
+	return $menu ; 
+}
+
+
+
+/**
+* Implementation of hook_perm()
+*/
+function joury_register_service_perm(){
+	return array("menu- spa","page- joury-register-service-contract","menu- salon", "menu- home", "override centers division") ;  	
+}	
+
+
+
+/**
+* Private function for joury/register/service/spa
+*/
+function _page_joury_register_service_spa(){
+	return theme('_theme_joury_register_service_spa') ; 
+}
+
+
+/**
+* Private function for joury/register/service/salon
+*/
+function _page_joury_register_service_salon(){
+	return theme('_theme_joury_register_service_salon') ; 
+}
+
+
+/**
+* Private function for joury/register/service/home
+*/
+function _page_joury_register_service_home(){
+	return theme('_theme_joury_register_service_home') ; 
+}
+
+
+
+/**
+* Implementation of hook_theme
+*/
+function joury_register_service_theme(){
+	return array(
+		'_theme_joury_register_service_spa' => array(
+			'template' =>  'theme_page_joury_register_service_spa' , 
+			'arguments' => array(1) ,		
+		),
+		'_theme_joury_register_service_salon' => array(
+			'template' =>  'theme_page_joury_register_service_salon' , 
+			'arguments' => array(1) ,		
+		),
+		'_theme_joury_register_service_home' => array(
+			'template' =>  'theme_page_joury_register_service_home' , 
+			'arguments' => array(1) ,		
+		),
+		'_joury_spa_contract' => array(
+			'template' =>  'theme_page_joury_spa_contract' , 
+			'arguments' => array(1) ,	
+		)
+	);
+}
+
+
+
+/**
+* Implementation of hook_form_alter
+*/
+function joury_register_service_form_alter(&$form, &$form_state, $form_id){
+	if($form_id == 'user_register' || $form_id == 'user_profile_form'){
+		$option = _get_centers_array() ; 
+		if(count($option) == 0){
+			$option  =  array() ; 	
+		}	
+		$uid = !empty($form['#uid']) ? $form['#uid'] : '' ; 
+		$user_center_handler = db_query("select centername from {joury_centers_users} where `uid` = %d", $uid) ;
+		$user_center_obj = db_fetch_object($user_center_handler) ; 
+		$user_center = !empty($user_center_obj->centername) ? $user_center_obj->centername : '' ;  
+		
+		if(user_access("administer users")) {
+		
+		$form['center-information-container']  =  array(
+			'#type' => 'fieldset' , 
+			'#title' => 'JOURY DETAILS' , 
+			'#collapsible' => TRUE,
+			'#weight' => '4' , 
+		);
+		
+		$form['center-information-container']['centerdetails'] =  array(
+				'#type' => 'select' , 
+				'#title' => t('CENTER NAME') ,
+				'#description' => t('please select the center name that this user work in') , 
+				'#default_value' => $user_center , 
+				'#options' => $option ,
+				'#required' => TRUE,
+		);
+		}
+	}	
+	
+}	
+
+
+/**
+* Implementatoin of hook_user
+*/
+
+function joury_register_service_user($op, &$edit, &$account, $category = NULL){
+	switch($op){
+		case 'insert' :
+					$center = $edit['centerdetails'] ; 
+					db_query("delete from   {joury_centers_users} where `uid` = %d" , $account->uid) ; 
+					$centername = $center ; 
+					$centerid = _get_center_id_of_name($centername) ; 
+					db_query("insert into {joury_centers_users} (`uid` , `centername` , `centerid`) values(%d,'%s',%d) " , 
+					$account->uid, $centername,$centerid);
+		break ; 	
+		
+		
+		case 'update' :
+					$center = $edit['centerdetails'] ; 
+					db_query("delete from   {joury_centers_users} where `uid` = %d" , $account->uid) ; 
+					$centername = $center ; 
+					$centerid = _get_center_id_of_name($centername) ; 
+					db_query("insert into {joury_centers_users} (`uid` , `centername` , `centerid`) values(%d,'%s',%d) " , 
+					$account->uid, $centername,$centerid);
+		break ; 
+	}	
+}	
+	
+
+
+
+
+/**
+* client form for the spa
+*/
+function joury_register_service_client_form_spa($form_state){
+	global $user ; 
+	$centers = (array) $user->centerdetails  ;
+	
+	$staff_center = $user->centerdetails ; 
+	// $services array	
+	$services[''] = '' ; 
+	if(user_access("override centers division")) {
+ 	$result_handle1 = db_query("select * from {joury_salonservice} where `category_nid` = %d" ,19) ;	
+ 	}else{
+ 	$result_handle1 = db_query("select * from {joury_salonservice} where `category_nid` = %d and `center` = '%s' " ,19,$staff_center) ;		
+ 	}	
+	while($result_obj = db_fetch_object($result_handle1)){
+		$services[$result_obj->name] = check_plain($result_obj->name) ; 	
+	}	
+ 
+ 
+ 	// clients array
+ 	$clients[''] = ''  ; 
+	$result_handle2 = db_query("select * from {joury_clients} ") ;
+	while($result_obj = db_fetch_object($result_handle2)){
+		$clients[$result_obj->firstname." , ".$result_obj->lastname] = check_plain($result_obj->firstname." ".$result_obj->lastname) ; 
+	} 	
+ 	
+ 	
+ 	// clients phone array
+ 	$clientsphone[''] =  '';
+ 	$result_handle3 = db_query("select * from {joury_clients} ") ;
+	while($result_obj = db_fetch_object($result_handle3)){
+		$clientsphone[$result_obj->firstname." , ".$result_obj->lastname." , ".$result_obj->cid] = check_plain($result_obj->phone) ; 
+		$clientsphone[$result_obj->firstname." , ".$result_obj->lastname." , ".$result_obj->cid." "] = check_plain($result_obj->mobile) ; 
+	}
+ 	
+ 
+	$url = url('', array('absolute' => TRUE)) ; 
+	$form['client-container'] =  array(
+	 	'#type' => 'fieldset' , 
+		'#collapsible' => TRUE , 
+		'#title' => t('CLIENT INFORMATION') , 
+	) ;
+
+	
+	$form['client-container']['client-phone']  =  array(
+		'#type' => 'select' , 
+		'#title' => t('CLIENT PHONE/MOBILE'),
+		'#description' => t("Insert the client phone/mobile number") , 
+		'#options' =>  $clientsphone , 
+	) ; 
+	
+	$form['client-container']['client-name']  =  array(
+		'#type' => 'select' , 
+		'#title' => t('CLIENT NAME'),
+		'#description' => t("Insert the client name") , 
+		'#options' =>  $clients , 
+	) ; 	
+	
+	$form['service-container'] =  array(
+	 	'#type' => 'fieldset' , 
+		'#collapsible' => TRUE , 
+		'#attributes' => array('style'=> 'margin-top:100px;') ,
+		'#title' => t('SERVICE INFORMATION') , 
+	) ;
+	
+	$form['service-container']['hidden-div-services-selected']  =  array(
+		'#type' => 'markup' , 
+		'#value' => "<div><table id='hidden-div-services-selected' ><tr id='head-raw-of-selected' ><td>SERIVCE NAME</td>  <td> SESSIONS </td> <td>PRICE</td> <td>PAID</td> <td>ROOM</td><td>BY</td> <td>DATE</td> <td>SELECT</td></tr> </table></div>",
+	) ;
+
+	$form['service-container']['service-name']  =  array(
+		'#type' => 'select' , 
+		'#title' => t('SERVICES'),
+		'#description' => t("please select the service") , 
+		'#options' => $services , 
+	) ;  
+
+	
+	
+	$form['service-container']['payment-method']  =  array(
+		'#title' => t('PAYMENT METHOD') , 
+		'#type' => 'select' , 
+		'#options' => array('cash' => 'cash','kenet' => 'kenet'),
+	) ;	
+	$form['service-container']['hidden-div-services']  =  array(
+		'#type' => 'markup' , 
+		'#value' => "<div id='hidden-div-services'>",
+	) ;
+	
+	
+	$form['client-container']['hidden-div']  =  array(
+		'#type' => 'markup' , 
+		'#value' => "<a href='{$url}node/add/clients' id='add-client' >NEW CLIENT</a> <div id='hidden-div'>",
+	) ; 
+	
+	$form['select-center'] =  array(
+		'#type' => 'select' , 
+		'#title' => t('CURRENT CENTER'),
+		'#description' => t('Please select current center branch') , 
+		'#options' => $centers,
+	) ; 
+	
+	
+	$form['submit']  =  array(
+		'#type' => 'submit' , 
+		'#value' => "SAVE",
+	) ; 
+
+	return $form ; 
+}
+
+
+/**
+* client form for the salon
+*/
+function joury_register_service_client_form_salon($form_state){
+	global $user ; 
+	$centers = (array) $user->centerdetails  ;
+
+	$staff_center = $user->centerdetails ; 
+	// $services array	
+	$services[''] = '' ; 
+	if(user_access("override centers division")) {
+ 	$result_handle = db_query("select * from {joury_salonservice} where `category_nid` = %d" ,20) ;	
+ 	}else{
+ 	$result_handle = db_query("select * from {joury_salonservice} where `category_nid` = %d and `center` = '%s' " ,20,$staff_center) ;		
+ 	}	
+	while($result_obj = db_fetch_object($result_handle)){
+		$services[$result_obj->name] = check_plain($result_obj->name) ; 	
+	}	
+	
+	
+ 
+ 	// clients array
+ 	$clients[''] = ''  ; 
+	$result_handle = db_query("select * from {joury_clients} ") ;
+	while($result_obj = db_fetch_object($result_handle)){
+		$clients[$result_obj->firstname." , ".$result_obj->lastname] = check_plain($result_obj->firstname." ".$result_obj->lastname) ; 
+	} 	
+ 	
+ 	
+ 	// clients phone array
+ 	$clientsphone[''] =  '';
+ 	$result_handle = db_query("select * from {joury_clients} ") ;
+	while($result_obj = db_fetch_object($result_handle)){
+		$clientsphone[$result_obj->firstname." , ".$result_obj->lastname." , ".$result_obj->cid] = check_plain($result_obj->phone) ; 
+		$clientsphone[$result_obj->firstname." , ".$result_obj->lastname." , ".$result_obj->cid." "] = check_plain($result_obj->mobile) ; 
+	}
+ 		
+	
+	$url = url('', array('absolute' => TRUE)) ; 
+	$form['client-container'] =  array(
+	 	'#type' => 'fieldset' , 
+		'#collapsible' => TRUE , 
+		'#title' => t('CLIENT INFORMATION') , 
+	) ;
+
+
+	
+	$form['client-container']['client-phone']  =  array(
+		'#type' => 'select' , 
+		'#title' => t('CLIENT PHONE/MOBILE'),
+		'#description' => t("Insert the client phone/mobile number") , 
+	//	'#autocomplete_path' => 'joury/register/service/autocomplete/clientphone',
+		'#options' => $clientsphone , 
+	) ;
+	
+	$form['client-container']['client-name']  =  array(
+		'#type' => 'select' , 
+		'#title' => t('CLIENT NAME'),
+		'#description' => t("Insert the client name") , 
+		//'#autocomplete_path' => 'joury/register/service/autocomplete/clientname',
+		'#options' => $clients , 
+	) ; 	  
+	
+	$form['service-container'] =  array(
+	 	'#type' => 'fieldset' , 
+		'#collapsible' => TRUE , 
+		'#attributes' => array('style'=> 'margin-top:100px;') ,
+		'#title' => t('SERVICE INFORMATION') , 
+	) ;
+	
+	$form['service-container']['hidden-div-services-selected']  =  array(
+		'#type' => 'markup' , 
+		'#value' => "<div><table id='hidden-div-services-selected' ><tr id='head-raw-of-selected' ><td>SERIVCE NAME</td>  <td> SESSIONS </td> <td>PRICE</td> <td>ROOM</td><td>BY</td> <td>DATE</td> <td>SELECT</td></tr> </table></div>",
+	) ;
+
+	$form['service-container']['service-name']  =  array(
+		'#type' => 'select' , 
+		'#title' => t('SERVICES'),
+		'#description' => t("please select the service") , 
+		'#options' => $services , 
+	) ;  
+	$form['service-container']['payment-method']  =  array(
+		'#type' => 'select' , 
+		'#options' => array('cash' => 'cash','kenet' => 'kenet'),
+		'#attributes' => array('style'=> 'display:none;') ,
+	) ;	
+	$form['service-container']['hidden-div-services']  =  array(
+		'#type' => 'markup' , 
+		'#value' => "<div id='hidden-div-services'>",
+	) ;
+	
+	
+	$form['client-container']['hidden-div']  =  array(
+		'#type' => 'markup' , 
+		'#value' => "<a href='{$url}node/add/clients' id='add-client' >NEW CLIENT</a> <div id='hidden-div'>",
+	) ; 
+	
+	$form['select-center'] =  array(
+		'#type' => 'select' , 
+		'#title' => t('CURRENT CENTER'),
+		'#description' => t('Please select current center branch') , 
+		'#options' => $centers,
+	) ; 
+		
+	$form['submit']  =  array(
+		'#type' => 'submit' , 
+		'#value' => "SAVE",
+	) ; 
+
+	return $form ; 
+}
+
+
+/**
+* client form for the spa
+*/
+function joury_register_service_client_form_home($form_state){
+	global $user ; 
+	$centers = (array) $user->centerdetails  ;
+	
+	$staff_center = $user->centerdetails ; 
+	// $services array	
+	$services[''] = '' ; 
+	if(user_access("override centers division")) {
+ 	$result_handle = db_query("select * from {joury_salonservice} where `category_nid` = %d" ,52) ;	
+ 	}else{
+ 	$result_handle = db_query("select * from {joury_salonservice} where `category_nid` = %d and `center` = '%s' " ,52,$staff_center) ;		
+ 	}
+ 		
+	while($result_obj = db_fetch_object($result_handle)){
+		$services[$result_obj->name] = check_plain($result_obj->name) ; 	
+	}	
+	
+	 
+ 	// clients array
+ 	$clients[''] = ''  ; 
+	$result_handle = db_query("select * from {joury_clients} ") ;
+	while($result_obj = db_fetch_object($result_handle)){
+		$clients[$result_obj->firstname." , ".$result_obj->lastname] = check_plain($result_obj->firstname." ".$result_obj->lastname) ; 
+	} 	
+ 	
+ 	
+ 	// clients phone array
+ 	$clientsphone[''] =  '';
+ 	$result_handle = db_query("select * from {joury_clients} ") ;
+	while($result_obj = db_fetch_object($result_handle)){
+		$clientsphone[$result_obj->firstname." , ".$result_obj->lastname." , ".$result_obj->cid] = check_plain($result_obj->phone) ; 
+		$clientsphone[$result_obj->firstname." , ".$result_obj->lastname." , ".$result_obj->cid." "] = check_plain($result_obj->mobile) ; 
+	}
+ 	
+ 	
+	
+	$url = url('', array('absolute' => TRUE)) ; 
+	$form['client-container'] =  array(
+	 	'#type' => 'fieldset' , 
+		'#collapsible' => TRUE , 
+		'#title' => t('CLIENT INFORMATION') , 
+	) ;
+
+
+	
+	$form['client-container']['client-phone']  =  array(
+		'#type' => 'select' , 
+		'#title' => t('CLIENT PHONE/MOBILE'),
+		'#description' => t("Insert the client phone/mobile number") , 
+	//	'#autocomplete_path' => 'joury/register/service/autocomplete/clientphone',
+		'#options' => $clientsphone , 
+	) ; 
+	
+	$form['client-container']['client-name']  =  array(
+		'#type' => 'select' , 
+		'#title' => t('CLIENT NAME'),
+		'#description' => t("Insert the client name") , 
+		//'#autocomplete_path' => 'joury/register/service/autocomplete/clientname',
+		'#options' => $clients , 
+	) ; 	
+	
+	$form['service-container'] =  array(
+	 	'#type' => 'fieldset' , 
+		'#collapsible' => TRUE , 
+		'#attributes' => array('style'=> 'margin-top:100px;') ,
+		'#title' => t('SERVICE INFORMATION') , 
+	) ;
+	
+	$form['service-container']['hidden-div-services-selected']  =  array(
+		'#type' => 'markup' , 
+		'#value' => "<div><table id='hidden-div-services-selected' ><tr id='head-raw-of-selected' ><td>SERIVCE NAME</td>  <td> SESSIONS </td> <td>PRICE</td> <td>PAID</td> <td>ROOM</td><td>BY</td> <td>DATE</td> <td>SELECT</td></tr> </table></div>",
+	) ;
+
+	$form['service-container']['service-name']  =  array(
+		'#type' => 'select' , 
+		'#title' => t('SERVICES'),
+		'#description' => t("please select the service") , 
+		'#options' => $services , 
+	) ;  
+	
+	$form['service-container']['payment-method']  =  array(
+		'#type' => 'select' , 
+		'#options' => array('cash' => 'cash','kenet' => 'kenet'),
+		'#attributes' => array('style' => 'display:none;'),
+	) ;	
+	$form['service-container']['hidden-div-services']  =  array(
+		'#type' => 'markup' , 
+		'#value' => "<div id='hidden-div-services'>",
+	) ;
+	
+	
+	$form['client-container']['hidden-div']  =  array(
+		'#type' => 'markup' , 
+		'#value' => "<a href='{$url}node/add/clients' id='add-client' >NEW CLIENT</a> <div id='hidden-div'>",
+	) ; 
+	
+	$form['select-center'] =  array(
+		'#type' => 'select' , 
+		'#title' => t('CURRENT CENTER'),
+		'#description' => t('Please select current center branch') , 
+		'#options' => $centers,
+	) ; 
+	
+	$form['submit']  =  array(
+		'#type' => 'submit' , 
+		'#value' => "SAVE",
+	) ; 
+
+	return $form ; 
+}
+
+
+
+
+/**
+* staff name autocomplete function 
+*/
+function _joury_register_service_autocomplete_staffname(){
+	$keyword = $_GET['term'] ; 
+	if($keyword != '*'){
+	$result_handle = db_query("select * from {joury_staff} where `firstname` like '%s%%' or `lastname` like '%s%%'" ,$keyword, $keyword) ;
+	}else{
+	$result_handle = db_query("select * from {joury_staff}") ;
+	}		
+	while($result_obj = db_fetch_object($result_handle)){
+		$result[] = check_plain($result_obj->firstname." ".$result_obj->lastname) ; 
+	}
+	print drupal_to_js($result)  ; 
+	exit() ; 
+}
+
+
+
+/**
+* Client name autocomplete function 
+*/
+function _joury_register_service_autocomplete_clientname($keyword){
+	$result_handle = db_query("select * from {joury_clients} where `firstname` like '%%%s%%' or `lastname` like '%%%s%%'" ,$keyword, $keyword) ;
+	while($result_obj = db_fetch_object($result_handle)){
+		$result[$result_obj->firstname." , ".$result_obj->lastname] = check_plain($result_obj->firstname." ".$result_obj->lastname) ; 
+	}
+	print drupal_to_js($result)  ; 
+	exit() ; 
+}
+
+/**
+* Client phone autocomplete function 
+*/
+function _joury_register_service_autocomplete_clientphone($keyword){
+	$result_handle = db_query("select * from {joury_clients} where `phone` like '%%%s%%' or `mobile` like '%%%s%%'" ,$keyword, $keyword) ;
+	while($result_obj = db_fetch_object($result_handle)){
+		$result[$result_obj->firstname." , ".$result_obj->lastname." , ".$result_obj->cid] = check_plain($result_obj->firstname." ".$result_obj->lastname) ; 
+	}
+	print drupal_to_js($result)  ; 
+	exit() ; 
+}
+
+
+/**
+* services name autocomplete function salon
+*/
+function _joury_register_service_autocomplete_services_salon($keyword){
+	if($keyword != '*'){
+	$result_handle = db_query("select * from {joury_salonservice} where `name` like '%%%s%%' and `category_nid` = %d" ,$keyword,20) ;
+	}else{
+	$result_handle = db_query("select * from {joury_salonservice} where `category_nid` = %d" ,20) ;	
+	}		
+	while($result_obj = db_fetch_object($result_handle)){
+		$result[$result_obj->name] = check_plain($result_obj->name) ; 
+	}
+	print drupal_to_js($result)  ; 
+	exit() ; 
+}
+
+
+/**
+* services name autocomplete function service
+*/
+function _joury_register_service_autocomplete_services_home($keyword){
+	if($keyword != '*'){
+	$result_handle = db_query("select * from {joury_salonservice} where `name` like '%%%s%%' and `category_nid` = %d" ,$keyword,52) ;
+	}else{
+	$result_handle = db_query("select * from {joury_salonservice} where `category_nid` = %d" ,52) ;	
+	}	
+	while($result_obj = db_fetch_object($result_handle)){
+		$result[$result_obj->name] = check_plain($result_obj->name) ; 
+	}
+	print drupal_to_js($result)  ; 
+	exit() ; 
+}
+
+
+/**
+* Generate client details
+*/
+function _joury_register_service_clientname_result(){
+	if($_POST['clientname']){
+		$clientfullname = $_POST['clientname'] ;
+		$clientnamesarray = explode(" , ", $clientfullname);
+		if(count($clientnamesarray) == 2){
+			$firstname = $clientnamesarray[0] ;
+			$lastname = $clientnamesarray[1] ;
+			$clients = _get_clients_data_by_name($firstname , $lastname) ;
+			$number_of_clients  =  count($clients) ; 
+			if($number_of_clients > 0){
+				echo "<table>" ; 
+				echo "<tr id='page-register-admin-table-row-head' >" ;
+					echo "<td>" ;
+						echo "FULLNAME" ; 
+					echo "</td>" ; 
+					
+					echo "<td id='page-register-admin-table-row-head' >" ;
+						echo "PHONE" ; 					
+					echo "</td>" ; 	
+					
+					echo "<td id='page-register-admin-table-row-head' >" ;
+						echo "MOBILE" ; 					
+					echo "</td>" ; 
+						
+					echo "<td id='page-register-admin-table-row-head' >" ;
+						echo "BIRTHDATE" ; 										
+					echo "</td>" ; 	
+
+					echo "<td id='page-register-admin-table-row-head' >" ;
+						echo "BALANCE" ; 										
+					echo "</td>" ; 					
+					
+					echo "<td id='page-register-admin-table-row-head' >" ;
+						echo "SELECT" ; 										
+					echo "</td>" ; 							
+				echo "</tr>" ; 
+				for($k=0 ; $k< $number_of_clients ; $k++){
+					echo "<tr>" ; 
+						echo "<td>" ; 
+							echo $clients[$k]->firstname." ".$clients[$k]->lastname ; 
+ 						echo "</td>" ; 
+						
+						echo "<td>" ; 
+							echo $clients[$k]->phone ; 
+						echo "</td>" ; 
+						
+						echo "<td>" ; 
+							echo $clients[$k]->mobile ; 
+						echo "</td>" ; 
+						
+						echo "<td>" ; 
+							echo $clients[$k]->birthdate ; 
+						echo "</td>" ; 
+						
+						echo "<td>" ; 
+							echo _get_balance_of_client_id($clients[$k]->cid)." KWD" ; 
+						echo "</td>" ; 						
+						
+						echo "<td>" ; 
+							echo "<input type='radio' value='".$clients[$k]->cid."' name='client-id' />" ; 
+						echo "</td>" ; 
+					echo "</tr>" ; 
+				}	
+				echo "</table>" ; 
+			}
+		}	
+	}		
+}
+
+
+
+
+
+/**
+* Generate client details by phone
+*/
+function _joury_register_service_clientphone_result(){
+	if($_POST['clientphone']){
+		
+		$clientfulldata = $_POST['clientphone'] ;
+		$clientdataarray = explode(" , ", $clientfulldata);
+
+		if(count($clientdataarray) == 3){
+			$firstname = $clientdataarray[0] ;
+			$lastname = $clientdataarray[1] ;
+			$cid = $clientdataarray[2] ;
+			$cid = trim($cid);
+			$clients = _get_clients_data_by_name_id($firstname,$lastname,$cid) ;
+			$number_of_clients  =  count($clients) ; 
+			if($number_of_clients > 0){
+				echo "<table>" ; 
+				echo "<tr id='page-register-admin-table-row-head' >" ;
+					echo "<td>" ;
+						echo "FULLNAME" ; 
+					echo "</td>" ; 
+					
+					echo "<td id='page-register-admin-table-row-head' >" ;
+						echo "PHONE" ; 					
+					echo "</td>" ; 	
+						
+					echo "<td id='page-register-admin-table-row-head' >" ;
+						echo "BIRTHDATE" ; 										
+					echo "</td>" ; 	
+
+					echo "<td id='page-register-admin-table-row-head' >" ;
+						echo "BALANCE" ; 										
+					echo "</td>" ; 						
+					
+					
+					echo "<td id='page-register-admin-table-row-head' >" ;
+						echo "SELECT" ; 										
+					echo "</td>" ; 							
+				echo "</tr>" ; 
+				for($k=0 ; $k< $number_of_clients ; $k++){
+					echo "<tr>" ; 
+						echo "<td>" ; 
+							echo $clients->firstname." ".$clients->lastname ; 
+ 						echo "</td>" ; 
+						
+						echo "<td>" ; 
+							echo $clients->phone ; 
+						echo "</td>" ; 
+						
+						echo "<td>" ; 
+							echo $clients->birthdate ; 
+						echo "</td>" ; 
+						
+						echo "<td>" ; 
+							echo _get_balance_of_client_id($clients->cid)." KWD" ; 
+						echo "</td>" ; 								
+						
+						echo "<td>" ; 
+							echo "<input type='radio' value='".$clients->cid."' name='client-id' checked='' />" ; 
+						echo "</td>" ; 
+					echo "</tr>" ; 
+				}	
+				echo "</table>" ; 
+			}
+		}	
+	}		
+}
+
+
+
+/**
+* Generate services details
+*/
+function _joury_register_service_services_result(){
+	if($_POST['servicename']){
+		$servicename = $_POST['servicename'] ;
+
+			$services = _get_service_by_name($servicename) ;
+			$number_of_services  =  count($services) ; 
+			if($number_of_services > 0){
+				echo "<table  >" ; 
+
+				echo "<tr id='head-raw' >" ;
+					echo "<td id='page-register-admin-table-row-head'  > " ;
+						echo "SERVICE NAME" ; 
+					echo "</td>" ; 
+					
+					echo "<td id='page-register-admin-table-row-head' >" ;
+						echo "SESSIONS" ; 					
+					echo "</td>" ; 	
+						
+					echo "<td id='page-register-admin-table-row-head' >" ;
+						echo "PRICE" ; 										
+					echo "</td>" ; 
+					
+					if(arg(5) == 'spa' || arg(5) == 'home'){
+						echo "<td id='page-register-admin-table-row-head'  >" ;
+							echo "PAID" ; 										
+						echo "</td>" ;
+					}else{
+						
+					}	
+					
+					echo "<td id='page-register-admin-table-row-head' >" ;
+						echo "ROOM" ; 										
+					echo "</td>" ;  
+					
+					echo "<td id='page-register-admin-table-row-head' >" ;
+						echo "BY" ; 										
+					echo "</td>" ;  
+					
+					echo "<td id='page-register-admin-table-row-head' >" ;
+						echo "DATE" ; 										
+					echo "</td>" ; 	
+					
+					
+					echo "<td id='page-register-admin-table-row-head' >" ;
+						echo "SELECT" ; 										
+					echo "</td>" ; 							
+				echo "</tr>" ; 
+				for($k=0 ; $k< $number_of_services ; $k++){
+					$keynumber= rand(1,9999999999) ; 
+					echo "<tr>" ; 
+						echo "<td>" ; 
+							echo $services[$k]->name ; 
+ 						echo "</td>" ; 
+						
+						echo "<td>" ; 
+							echo $services[$k]->sessionsnum ; 
+						echo "</td>" ; 
+						
+						echo "<td>" ; 
+							echo $services[$k]->price." KWD" ; 
+						echo "</td>" ; 
+						
+						
+						if(arg(5) == 'spa' || arg(5) == 'home'){
+						echo "<td>" ; 
+							echo "<input type='text' size='4'  value='".$services[$k]->price."' name='paid-".$services[$k]->sid.$keynumber."'  id='paid-".$services[$k]->sid.$keynumber."' disabled = '' />" ; 
+						echo "</td>" ; 
+						}else{
+						echo "<td style='display:none;'>" ; 
+							echo "<input type='hidden' size='4'  value='".$services[$k]->price."' name='paid-".$services[$k]->sid.$keynumber."'  id='paid-".$services[$k]->sid.$keynumber."' />" ; 
+						echo "</td>" ; 						
+						}	
+						
+						echo "<td>" ; 
+							_print_select_input_type('room-'.$services[$k]->sid.$keynumber,'joury_rooms','roomname','roomname','select-room') ; 
+						echo "</td>" ; 
+						
+						echo "<td>" ; 
+							echo "<select name='staff-".$services[$k]->sid.$keynumber."' id='servicestaffname' >" ;
+								echo "<option value=''>select-staff</option>" ; 
+								 	$result_handle = db_query("select * from {joury_staff}") ;
+									while($result_obj = db_fetch_object($result_handle)){
+									echo "<option value='".$result_obj->firstname." ".$result_obj->lastname."'>".$result_obj->firstname." ".$result_obj->lastname."</option>" ; 
+									}
+							echo "</select>" ; 
+						echo "</td>" ; 
+
+						echo "<td>" ; 
+							echo "<input type='text' size='10' name='registerdate-".$services[$k]->sid.$keynumber."' disabled='' id='registerdate-".$services[$k]->sid.$keynumber."' />" ; 
+						echo "</td>" ; 
+	
+						
+						echo "<td>" ; 
+							echo "<input type='checkbox'  name='select-".$services[$k]->sid.$keynumber."' id='select' />" ; 
+						echo "</td>" ; 
+						
+						echo "<td style='display:none;'>" ; 
+							echo "<input type='hidden'  name='keynumber'  value='".$services[$k]->sid.$keynumber."' id='keynumber' />" ; 
+							echo "<input type='hidden'  name='serviceid-".$services[$k]->sid.$keynumber."' value='".$services[$k]->sid."' />" ; 
+						echo "</td>" ; 
+					echo "</tr>" ; 
+				}	
+				echo "</table>" ; 
+			}
+		
+	}		
+}
+
+
+
+
+/**
+* Submit the form 
+*/
+
+function joury_register_service_client_form_spa_submit($form,$form_state){
+	
+	if($form['#post']['client-id']){
+		$clientid = $form['#post']['client-id'] ; 
+		$clientobj = _get_client_by_id($clientid) ; 
+		$clientname = $clientobj->firstname." ".$clientobj->lastname ; 
+		$payment_method = $form['#post']['payment-method'] ; 
+		
+		$kenetid = $form['#post']['kenet-receipt'] ; 
+		$timestamp = time() ; 
+		$date = date("m/d/Y h:i a" , $timestamp) ; 
+		global $user ; 
+		foreach($form['#post'] as $key => $val){
+			if($val == 'on'){
+				$keynumber = substr($key,7,2452) ;
+				$serviceid[] = $form['#post']['serviceid-'.$keynumber] ; 
+				$service_object[] = _get_service_by_id($form['#post']['serviceid-'.$keynumber]) ; 
+				$registerdate[] =$form['#post']['registerdate-'.$keynumber] ;  
+				$room[] =$form['#post']['room-'.$keynumber] ; 
+				$by[] =$form['#post']['staff-'.$keynumber] ; 				
+				$paid[] = $form['#post']['paid-'.$keynumber] ;   
+			}	
+		} 
+		
+		$centername = $user->centerdetails; 
+		
+		$number_of_services = count($serviceid) ; 
+		if($number_of_services > 0 && !empty($clientid)) {	
+		
+		for($k=0 ; $k < $number_of_services ; $k++) {
+				$service_data = _get_service_by_id($serviceid[$k]) ;	
+			
+				db_query("insert into {joury_client_services_register} (`cid` , `sid` , `date` , `payment_method` , `paid`,`author`,`centername`,`by`,`room`)
+				values (%d,%d,'%s','%s',%f,%d,'%s','%s','%s')" , $clientid,$serviceid[$k],$date,$payment_method,$paid[$k],$user->uid,$centername,$by[$k],$room[$k]) ; 
+		  		$id	= db_last_insert_id('joury_client_services_register' , 'id') ; 	 
+		  		$registered_id[]	= db_last_insert_id('joury_client_services_register' , 'id') ; 
+		  		
+
+				
+				
+				//insert first session date
+		  		db_query("insert into {joury_clients_attendance_date} (`rid`,`session`,`date`,`room`,`by`) values (%d,%d,'%s','%s','%s')",
+				$id,1,$registerdate[$k],$room[$k],$by[$k]) ;
+				
+
+				$service_register_id = $id ; 
+				//insert data to bill
+		  		db_query("insert into {joury_bill} (`type`,`quantity`,`clientid`,`clientname`,`service_rid`,`servicename`,`by`,`date`,`sellprice`,`price`,`totalprice`)
+		  		 values ('%s',%d,%d,'%s',%d,'%s','%s','%s',%f,%f,%f)",
+				'spa',1,$clientid,$clientname,$service_register_id,$service_object[$k]->name,$user->uid,$date,$service_object[$k]->price,$service_object[$k]->price,$paid[$k]) ;
+	
+
+				
+				// insert kenet data
+				if(!empty($kenetid)){
+				db_query("insert into {joury_register_kenet} (`register_id`,`card_id`) values (%d,%d)",
+				$id,$kenetid) ;	
+				}	
+				
+				if($paid[$k] < $service_data->price){
+					$debt_quantity = 	($service_data->price)  - $paid[$k] ; 
+				db_query("insert into {joury_clients_debts} (`cid`,`clientname`,`rid`,`status`,`debt_quantity`) values 
+				(%d,'%s',%d,%d,%f)",
+				$clientid,$clientname,$id,0,$debt_quantity) ;	
+				}	
+		}
+		
+		
+		
+		$number_of_registered_id = count($registered_id) ; 
+		if($number_of_registered_id >1){
+			$registered_ids = implode('-',$registered_id);
+		}elseif($number_of_registered_id == 1) {
+			$registered_ids = $registered_id[0]."-".'' ; 
+		}else{
+			
+		}			
+		
+		drupal_set_message("<div class='message ok'><center>CLIENT REGISTERED SUCCESSFULLY</center></div>") ; 
+		if(!empty($registered_ids)){
+			drupal_goto('joury/register/service/contract/'.$registered_ids) ; 	
+		}	
+		
+		}else{
+		drupal_set_message("<div class='message error'><center>NOT COMPLETED !! PLEASE CHECK ALL FIELDS</center></div>") ; 	
+		}	
+	}else{
+		drupal_set_message("<div class='message error'><center>NOT COMPLETED..!!! PLEASE CHECK ALL FIELDS</center></div>") ; 
+	}	
+}	
+
+
+/**
+* Submit the form of salon
+*/
+
+function joury_register_service_client_form_salon_submit($form,$form_state){
+	if($form['#post']['client-id']){
+		$clientid = $form['#post']['client-id'] ; 
+		$clientobj = _get_client_by_id($clientid) ; 
+		$clientname = $clientobj->firstname." ".$clientobj->lastname ; 
+ 		$payment_method = $form['#post']['payment-method'] ; 
+
+		$kenetid = $form['#post']['kenet-receipt'] ; 
+		$timestamp = time() ; 
+		$date = date("m/d/Y h:i a" , $timestamp) ; 
+		global $user ; 
+		foreach($form['#post'] as $key => $val){
+			if($val == 'on'){
+				$keynumber = substr($key,7,2452) ;
+				$serviceid[] = $form['#post']['serviceid-'.$keynumber] ; 
+				$service_object[] = _get_service_by_id($form['#post']['serviceid-'.$keynumber]) ; 
+				$registerdate[] =$form['#post']['registerdate-'.$keynumber] ; 
+				$room[] =$form['#post']['room-'.$keynumber] ; 
+				$by[] =$form['#post']['staff-'.$keynumber] ; 				
+				$paid[] = $form['#post']['paid-'.$keynumber] ;   
+			}	
+		} 
+		$centername = $user->centerdetails; 
+		$number_of_services = count($serviceid) ; 
+		if($number_of_services > 0 && !empty($clientid)) {	
+		for($k=0 ; $k < $number_of_services ; $k++) {
+				$service_data = _get_service_by_id($serviceid[$k]) ;				
+			
+				db_query("insert into {joury_client_services_register} (`cid` , `sid` , `date` , `payment_method` , `paid`,`author`,`centername`,`by`,`room`,`status`)
+				values (%d,%d,'%s','%s',%f,%d,'%s','%s','%s',%d)" , $clientid,$serviceid[$k],$date,$payment_method,$paid[$k],$user->uid,$centername,$by[$k],$room[$k],1) ; 
+		  		$id	= db_last_insert_id('joury_client_services_register' , 'id') ; 	 
+		  		
+		  		//insert first session date
+		  		db_query("insert into {joury_clients_attendance_date} (`rid`,`session`,`date`,`room`,`by`,`attend`) values (%d,%d,'%s','%s','%s',1)",
+				$id,1,$registerdate[$k],$room[$k],$by[$k]) ;
+				
+				
+				$service_register_id = $id ; 
+				//insert data to bill
+		  		db_query("insert into {joury_bill} (`type`,`quantity`,`clientid`,`clientname`,`service_rid`,`servicename`,`by`,`date`,`sellprice`,`price`,`totalprice`)
+		  		 values ('%s',%d,%d,'%s',%d,'%s','%s','%s',%f,%f,%f)",
+				'salon',1,$clientid,$clientname,$service_register_id,$service_object[$k]->name,$user->uid,$date,$service_object[$k]->price,$service_object[$k]->price,$paid[$k]) ;
+				
+				
+				// insert kenet date
+				if(!empty($kenetid)){
+				db_query("insert into {joury_register_kenet} (`register_id`,`card_id`) values (%d,%d)",
+				$id,$kenetid) ;	
+				}	
+				
+				// debt money
+
+				if($paid[$k] < $service_data->price ){
+					$debt_quantity = 	($service_data->price)  - $paid[$k] ; 
+				db_query("insert into {joury_clients_debts} (`cid`,`clientname`,`rid`,`status`,`debt_quantity`) values 
+				(%d,'%s',%d,%d,%f)",
+				$clientid,$clientname,$id,0,$debt_quantity) ;	
+				}	
+				
+				
+	}
+		drupal_set_message("<div class='message ok'><center>CLIENT REGISTERED SUCCESSFULLY</center></div>") ; 
+		
+		}else{
+		drupal_set_message("<div class='message error'><center>NOT COMPLETED !! PLEASE CHECK ALL FIELDS</center></div>") ; 	
+		}	
+		
+	}else{
+		drupal_set_message("<div class='message error'><center>NOT COMPLETED..!!! PLEASE CHECK ALL FIELDS</center></div>") ; 
+	}	
+}	
+
+
+/**
+* Submit the form of home
+*/
+
+function joury_register_service_client_form_home_submit($form,$form_state){
+
+	if($form['#post']['client-id']){
+		$clientid = $form['#post']['client-id'] ; 
+		$clientobj = _get_client_by_id($clientid) ; 
+		$clientname = $clientobj->firstname." ".$clientobj->lastname ; 
+		$payment_method = $form['#post']['payment-method'] ; 
+
+		$kenetid = $form['#post']['kenet-receipt'] ;
+		$timestamp = time() ; 
+		$date = date("m/d/Y h:i a" , $timestamp) ; 
+		global $user ; 
+		foreach($form['#post'] as $key => $val){
+			if($val == 'on'){
+				$keynumber = substr($key,7,2452) ;
+				$serviceid[] = $form['#post']['serviceid-'.$keynumber] ; 
+				$service_object[] = _get_service_by_id($form['#post']['serviceid-'.$keynumber]) ; 				
+				$registerdate[] =$form['#post']['registerdate-'.$keynumber] ;  
+				$room[] =$form['#post']['room-'.$keynumber] ; 
+				$by[] =$form['#post']['staff-'.$keynumber] ; 				
+				$paid[] = $form['#post']['paid-'.$keynumber] ;   
+			}	
+		} 
+		$centername = $user->centerdetails; 
+		$number_of_services = count($serviceid) ; 
+		if($number_of_services > 0 && !empty($clientid)) {		
+		for($k=0 ; $k < $number_of_services ; $k++) {
+				$service_data = _get_service_by_id($serviceid[$k]) ;				
+			
+				db_query("insert into {joury_client_services_register} (`cid` , `sid` , `date` , `payment_method` , `paid`,`author`,`centername`,`by`,`room`)
+				values (%d,%d,'%s','%s',%f,%d,'%s','%s','%s')" , $clientid,$serviceid[$k],$date,$payment_method,$paid[$k],$user->uid,$centername,$by[$k],$room[$k]) ; 
+		  		$id	= db_last_insert_id('joury_client_services_register' , 'id') ; 	 
+
+				
+				
+					//insert first session date
+		  		db_query("insert into {joury_clients_attendance_date} (`rid`,`session`,`date`,`room`,`by`) values (%d,%d,'%s','%s','%s')",
+				$id,1,$registerdate[$k],$room[$k],$by[$k]) ;			
+	
+	
+				$service_register_id = $id ; 
+				//insert data to bill
+		  		db_query("insert into {joury_bill} (`type`,`quantity`,`clientid`,`clientname`,`service_rid`,`servicename`,`by`,`date`,`sellprice`,`price`,`totalprice`)
+		  		 values ('%s',%d,%d,'%s',%d,'%s','%s','%s',%f,%f,%f)",
+				'home',1,$clientid,$clientname,$service_register_id,$service_object[$k]->name,$user->uid,$date,$service_object[$k]->price,$service_object[$k]->price,$paid[$k]) ;
+		
+				
+				
+				// insert kenet date
+				if(!empty($kenetid)){
+				db_query("insert into {joury_register_kenet} (`register_id`,`card_id`) values (%d,%d)",
+				$id,$kenetid) ;
+				}	
+				
+				// debt money
+				if($paid[$k] < $service_data->price){
+					$debt_quantity = 	($service_data->price)  - $paid[$k] ; 
+				db_query("insert into {joury_clients_debts} (`cid`,`clientname`,`rid`,`status`,`debt_quantity`) values 
+				(%d,'%s',%d,%d,%f)",
+				$clientid,$clientname,$id,0,$debt_quantity) ;	
+				}	
+		}
+		drupal_set_message("<div class='message ok'><center>CLIENT REGISTERED SUCCESSFULLY</center></div>") ; 
+		
+		}else{
+		drupal_set_message("<div class='message error'><center>NOT COMPLETED !! PLEASE CHECK ALL FIELDS</center></div>") ; 	
+		}	
+	}else{
+		drupal_set_message("<div class='message error'><center>NOT COMPLETED..!!! PLEASE CHECK ALL FIELDS</center></div>") ; 
+	}	
+}	
+
+
+
+
+
+
+/**
+* Print Contract
+*/
+function _page_joury_register_service_contract(){
+	return theme('_joury_spa_contract') ; 	
+}	
+
+
+
+/**
+* get register data by rid
+*/
+
+function _get_register_data_by_rid($rid){
+	$result_handle = db_query("select * from {joury_client_services_register} where `id` = %d ",$rid) ;
+ 	$result_obj = db_fetch_object($result_handle) ; 
+	return $result_obj ; 
+}	
+
+
+
+/**
+* get first session start date
+*/
+function _get_start_date_of_rid($rid){
+	$result_handle = db_query("select * from {joury_clients_attendance_date} where `rid` = %d  and `session` = 1 ",$rid) ;
+ 	$result_obj = db_fetch_object($result_handle) ; 
+	return $result_obj->date ; 
+}	
+
+
+
+/**
+*
+*/
+
+function _get_contract_data_with_date($date) {
+	$result_handle = db_query("select * from {joury_client_services_register} where `date` like '%%%s%%' and `sid` in 
+	( select `sid` from {joury_salonservice} where `category_nid` = 19 )
+	",$date) ;
+ 	while($result_obj = db_fetch_object($result_handle)){
+ 	$result[] = $result_obj ; 	
+ 	}	
+	return $result ; 	
+}	
+
+
+
+

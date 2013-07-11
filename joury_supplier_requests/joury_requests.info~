@@ -1,0 +1,6 @@
+; $Id$
+
+name = joury requests
+description = create the database schema for requests
+core = 6.x
+package = joury spa

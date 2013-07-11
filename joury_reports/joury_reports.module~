@@ -1,0 +1,943 @@
+<?php
+// $Id$
+
+
+
+
+/**
+* Implementatoin of hook_menu
+*/
+
+function joury_reports_menu(){
+	$menu['joury/report/services/imports']	 =  array(
+		'title' => t('SERVICE IMPORTS') , 
+		'description' => t('') , 
+		'access arguments' => array('report- services') , 
+		'page callback' => '_joury_report_services_imports' ,
+		'type' => MENU_NORMAL_ITEM,
+	
+	);
+	
+	$menu['joury/report/stores']	 =  array(
+		'title' => t('STORES REPORTS') , 
+		'description' => t('') , 
+		'access arguments' => array('report- stores transactions') , 
+		'page callback' => '_joury_report_stores' ,
+		'type' => MENU_NORMAL_ITEM,
+	
+	);
+
+	$menu['joury/report/showrooms']	 =  array(
+		'title' => t('SHOWROOMS REPORTS') , 
+		'description' => t('') , 
+		'access arguments' => array('report- showrooms transactions') , 
+		'page callback' => '_joury_report_showrooms' ,
+		'type' => MENU_NORMAL_ITEM,
+	
+	);
+	
+	
+	$menu['joury/report/staff']	 =  array(
+		'title' => t('STAFF PRODUCT REPORTS') , 
+		'description' => t('') , 
+		'access arguments' => array('report- staff borrow') , 
+		'page callback' => '_joury_report_staff' ,
+		'type' => MENU_NORMAL_ITEM,
+	);
+	
+	$menu['joury/report/staff-attendance']	 =  array(
+		'title' => t('STAFF ATTENDANCE REPORTS') , 
+		'access arguments' => array('report- staff attendance') , 
+		'page callback' => '_joury_report_staff_attendance' ,
+		'type' => MENU_NORMAL_ITEM,
+	);	
+
+	$menu['joury/report/get/months/options'] = array(
+		'access arguments' => array('access content') , 
+		'page callback' =>  '_path_report_get_months_options', 
+		'type' => MENU_CALLBACK, 
+	); 	
+	
+	$menu['joury/report/clients/debt/payment']	 =  array(
+		'title' => t('DEBT PAYMENT') , 
+		'description' => t('') , 
+		'access arguments' => array('report- debt repayment') , 
+		'page callback' => '_joury_report_clients_debt_payment' ,
+		'type' => MENU_NORMAL_ITEM,
+	);	
+	
+	$menu['joury/report/canceled/services']	 =  array(
+		'title' => t('CANCELED SERVICES REPORTS') , 
+		'description' => t('') , 
+		'access arguments' => array('report- canceled services') , 
+		'page callback' => '_joury_report_canceled_services' ,
+		'type' => MENU_NORMAL_ITEM,
+	
+	);
+	
+	return $menu ; 
+}	
+
+/**
+* hook_perm
+*/
+function joury_reports_perm() {
+	return array("report- services", "report- stores transactions", "report- showrooms transactions"
+	, "report- staff borrow", "report- canceled services", "report- debt repayment", "report- staff attendance"
+	) ; 
+}	
+
+/**
+* Implementation of hook_theme
+*/
+function joury_reports_theme(){
+	return array(
+		'theme_joury_report_services_imports'	=> array(
+			'template' => 'page_joury_report_services_imports' , 
+			'arguments' => array(1) ,
+		),
+		'theme_joury_report_stores'	=> array(
+			'template' => 'page_joury_report_stores' , 
+			'arguments' => array(1) ,
+		),	
+		'theme_joury_report_showrooms'	=> array(
+			'template' => 'page_joury_report_showrooms' , 
+			'arguments' => array(1) ,
+		),	
+		'theme_joury_report_staff'	=> array(
+			'template' => 'page_joury_report_staff' , 
+			'arguments' => array(1) ,
+		),			
+		'theme_joury_report_canceled_services'	=> array(
+			'template' => 'page_joury_report_canceled_services' , 
+			'arguments' => array(1) ,
+		),				
+		'theme_joury_report_clients_debt_payment'	=> array(
+			'template' => 'page_joury_report_clients_debt_payment' , 
+			'arguments' => array(1) ,
+		),
+		'theme_joury_report_staff_attendnace' => array(
+			'template' => 'page_joury_report_staff_attendance' , 
+			'arguments' => array(1) ,
+		)	
+	);	
+}	
+
+
+
+
+
+/**
+* Generate clients dept payment report
+*/
+
+function _joury_report_clients_debt_payment(){
+	return theme('theme_joury_report_clients_debt_payment') ; 
+}	
+
+/**
+* Generate canceled services report page
+*/
+function _joury_report_canceled_services(){
+	return theme('theme_joury_report_canceled_services') ; 
+}	
+
+/**
+* Generate services report page
+*/
+function _joury_report_services_imports(){
+	return theme('theme_joury_report_services_imports') ; 	
+}	
+
+/**
+* Generate stores report page
+*/
+function _joury_report_stores(){
+	return theme('theme_joury_report_stores') ; 	
+}	
+
+/**
+* Generate stores report page
+*/
+function _joury_report_showrooms(){
+	return theme('theme_joury_report_showrooms') ; 	
+}
+
+/**
+* Generate staff report page
+*/
+function _joury_report_staff(){
+	return theme('theme_joury_report_staff') ; 	
+}	
+
+/**
+* Generate staff attendance report
+*/
+function _joury_report_staff_attendance() {
+	return theme('theme_joury_report_staff_attendnace') ; 	
+}	
+
+
+
+/**
+* Generate form for client debt payment
+*/
+function joury_report_client_debt_payment_form($form_state){
+	$clients_options_handler = db_query("select * from {joury_clients_debts_log} group by `client_id`") ; 
+	$clients[''] =  'select-client' ; 
+	
+	while( $clients_option_obj = db_fetch_object($clients_options_handler)){
+			$clients[$clients_option_obj->client_id] = check_plain(_get_client_name($clients_option_obj->client_id)) ; 	
+	}	
+
+
+
+	$form['option-container']  =  array(
+		'#type' => 'fieldset' , 
+		'#title' => t('REPORTS CONFIGURATION') , 
+	);
+	
+	$form['option-container']['clientid']  =  array(
+		'#type' => 'select' , 
+		'#title' => t('CLIENT NAME') , 
+		'#description' => t('select the showroom') , 
+		'#options' => $clients  , 
+	);
+
+	$form['option-container']['datefrom']  =  array(
+		'#type' => 'textfield' , 
+		'#title' => t('FROM-date') , 
+		'#attributes' => array('id' => 'from-date' , 'style' => 'width:40%;') , 
+	);
+	$form['option-container']['dateto']  =  array(
+		'#type' => 'textfield' , 
+		'#title' => t('TO-date') , 
+		'#attributes' => array('id' => 'to-date' , 'style' => 'width:40%;') , 
+	);
+	$form['option-container']['submit']  =  array(
+		'#type' => 'submit' ,  
+		'#value' => t('SEND') ,
+	);
+	
+	return $form ; 	
+	
+}	
+
+
+
+
+/**
+* generate form for joury servics imports report
+*/
+function joury_report_services_imports_form($form_state){
+
+	$centers = _report_get_form_center_options() ; 
+	
+	
+
+	$services = _report_get_form_service_options() ; 
+	
+	
+	
+	
+	
+	
+   $form['option-container']  =  array(
+		'#type' => 'fieldset' , 
+		'#title' => t('REPORTS CONFIGURATION') , 
+	);
+	$form['option-container']['center-name']  =  array(
+		'#type' => 'select' , 
+		'#title' => t('CENTER NAME') , 
+		'#description' => t('select the name of the center') , 
+		'#options' => $centers , 
+	);
+	$form['option-container']['service-id']  =  array(
+		'#type' => 'select' , 
+		'#title' => t('SERVICE NAME') , 
+		'#description' => t('select the name of the service') , 
+		'#options' => $services , 
+	);
+	$form['option-container']['date-from']  =  array(
+		'#type' => 'textfield' , 
+		'#title' => t('FROM-date') , 
+		'#attributes' => array('id' => 'from-date' , 'style' => 'width:40%;') , 
+	);
+	$form['option-container']['date-to']  =  array(
+		'#type' => 'textfield' , 
+		'#title' => t('TO-date') , 
+		'#attributes' => array('id' => 'to-date' , 'style' => 'width:40%;') , 
+	);
+	$form['option-container']['submit']  =  array(
+		'#type' => 'submit' ,  
+		'#value' => t('SEND') ,
+	);
+	
+	return $form ; 
+}
+
+
+
+
+
+/**
+* generate form for joury stores report
+*/
+function joury_report_stores_form($form_state){
+
+	
+	$stores = _report_get_form_store_options() ; 
+
+	
+	
+	
+	
+	
+   $form['option-container']  =  array(
+		'#type' => 'fieldset' , 
+		'#title' => t('REPORTS CONFIGURATION') , 
+	);
+	$form['option-container']['storename']  =  array(
+		'#type' => 'select' , 
+		'#title' => t('STORE NAME') , 
+		'#description' => t('select the store') , 
+		'#options' => $stores  , 
+	);
+	$form['option-container']['operation']  =  array(
+		'#type' => 'select' , 
+		'#title' => t('OPERATION') , 
+		'#description' => t('select the store operation') , 
+		'#options' => array('requests' => 'STORES REQUESTS' , 'imports' => 'STORE IMPORTS') , 
+	);
+	$form['option-container']['datefrom']  =  array(
+		'#type' => 'textfield' , 
+		'#title' => t('FROM-date') , 
+		'#attributes' => array('id' => 'from-date' , 'style' => 'width:40%;') , 
+	);
+	$form['option-container']['dateto']  =  array(
+		'#type' => 'textfield' , 
+		'#title' => t('TO-date') , 
+		'#attributes' => array('id' => 'to-date' , 'style' => 'width:40%;') , 
+	);
+	$form['option-container']['submit']  =  array(
+		'#type' => 'submit' ,  
+		'#value' => t('SEND') ,
+	);
+	
+	return $form ; 
+}
+
+
+
+
+/**
+* generate form for joury showrooms report
+*/
+function joury_report_showrooms_form($form_state){
+
+	
+	$showrooms = _report_get_form_showroom_options() ; 
+	
+	
+	
+	
+   $form['option-container']  =  array(
+		'#type' => 'fieldset' , 
+		'#title' => t('REPORTS CONFIGURATION') , 
+	);
+	$form['option-container']['showroomname']  =  array(
+		'#type' => 'select' , 
+		'#title' => t('SHOWROOM NAME') , 
+		'#description' => t('select the showroom') , 
+		'#options' => $showrooms  , 
+	);
+	$form['option-container']['operation']  =  array(
+		'#type' => 'select' , 
+		'#title' => t('OPERATION') , 
+		'#description' => t('select the showroom operation') , 
+		'#options' => array('requests' => 'SHOWROOM REQUESTS' , 'imports' => 'SHOWROOM IMPORTS') , 
+	);
+	$form['option-container']['datefrom']  =  array(
+		'#type' => 'textfield' , 
+		'#title' => t('FROM-date') , 
+		'#attributes' => array('id' => 'from-date' , 'style' => 'width:40%;') , 
+	);
+	$form['option-container']['dateto']  =  array(
+		'#type' => 'textfield' , 
+		'#title' => t('TO-date') , 
+		'#attributes' => array('id' => 'to-date' , 'style' => 'width:40%;') , 
+	);
+	$form['option-container']['submit']  =  array(
+		'#type' => 'submit' ,  
+		'#value' => t('SEND') ,
+	);
+	
+	return $form ; 
+}
+
+
+/**
+* generate form for joury canceled services report
+*/
+function joury_report_canceled_services_form($form_state){
+	$clients_options_handler = db_query("select * from {joury_cancle_service}") ; 
+	$clients[''] =  'select-client' ; 
+	while( $clients_option_obj = db_fetch_object($clients_options_handler)){
+			$clients[$clients_option_obj->cid] = check_plain($clients_option_obj->clientname) ; 	
+	}	
+
+
+
+	$form['option-container']  =  array(
+		'#type' => 'fieldset' , 
+		'#title' => t('REPORTS CONFIGURATION') , 
+	);
+	
+	$form['option-container']['clientid']  =  array(
+		'#type' => 'select' , 
+		'#title' => t('CLIENT NAME') , 
+		'#description' => t('select the showroom') , 
+		'#options' => $clients  , 
+	);
+
+	$form['option-container']['datefrom']  =  array(
+		'#type' => 'textfield' , 
+		'#title' => t('FROM-date') , 
+		'#attributes' => array('id' => 'from-date' , 'style' => 'width:40%;') , 
+	);
+	$form['option-container']['dateto']  =  array(
+		'#type' => 'textfield' , 
+		'#title' => t('TO-date') , 
+		'#attributes' => array('id' => 'to-date' , 'style' => 'width:40%;') , 
+	);
+	$form['option-container']['submit']  =  array(
+		'#type' => 'submit' ,  
+		'#value' => t('SEND') ,
+	);
+	
+	return $form ; 
+
+	
+}	
+
+
+
+/**
+* generate form for joury staff report
+*/
+function joury_report_staff_form($form_state){
+	$staff_options_handler = db_query("select * from {joury_staff}") ; 
+	$staff['all'] =  '---ALL---' ; 
+	while( $staff_option_obj = db_fetch_object($staff_options_handler)){
+			$staff[$staff_option_obj->sid] = $staff_option_obj->firstname." ".$staff_option_obj->lastname ; 	
+	}	
+	
+	
+
+	
+	$stores = _report_get_form_store_options() ; 
+	
+	
+	
+	
+   $form['option-container']  =  array(
+		'#type' => 'fieldset' , 
+		'#title' => t('REPORTS CONFIGURATION') , 
+	);
+	$form['option-container']['staffid']  =  array(
+		'#type' => 'select' , 
+		'#title' => t('STAFF NAME') , 
+		'#description' => t('select the staff') , 
+		'#options' => $staff  , 
+	);
+	$form['option-container']['storeid']  =  array(
+		'#type' => 'select' , 
+		'#title' => t('STORE NAME') , 
+		'#description' => t('filter the store that the staff rent from') , 
+		'#options' => $stores  , 
+	);
+	$form['option-container']['datefrom']  =  array(
+		'#type' => 'textfield' , 
+		'#title' => t('FROM-date') , 
+		'#attributes' => array('id' => 'from-date' , 'style' => 'width:40%;') , 
+	);
+	$form['option-container']['dateto']  =  array(
+		'#type' => 'textfield' , 
+		'#title' => t('TO-date') , 
+		'#attributes' => array('id' => 'to-date' , 'style' => 'width:40%;') , 
+	);
+	$form['option-container']['submit']  =  array(
+		'#type' => 'submit' ,  
+		'#value' => t('SEND') ,
+	);
+	
+	return $form ; 
+}
+
+
+/**
+* generate form for joury staff attendance report
+*/
+function joury_report_staff_attendance_form($form_state){	
+	$months_options	= _get_months_options(date("Y", time())) ;
+	for($k = 1995 ;  $k < 2040 ; $k++ ) {
+		$year_options[$k] = $k ; 	
+	}	
+	
+	
+   $form['option-container']  =  array(
+		'#type' => 'fieldset' , 
+		'#title' => t('REPORTS CONFIGURATION') , 
+		'#collapsible' => TRUE , 
+	);
+	$form['option-container']['employeeid']  =  array(
+		'#type' => 'textfield' , 
+		'#title' => t('EMPLOYEE ID') , 
+		'#description' => t('Please write the employee id') , 
+		'#size' => '10' , 
+	);
+	$form['option-container']['year']  =  array(
+		'#type' => 'select' , 
+		'#title' => t('Year') , 
+		'#options' => $year_options ,
+		'#ahah' => array(
+      	'path' => 'joury/report/get/months/options',
+     		'wrapper' => 'month-select-options',
+		),
+		'#default_value' => date("Y" ,time()) , 
+	);
+
+	$form['option-container']['month']  =  array(
+		'#type' => 'select' , 
+		'#title' => t('Month') , 
+		'#options' => $months_options , 
+		'#prefix' => "<div id='month-select-options'>",
+		'#suffix' => "</div>" , 
+	);
+	
+	$form['option-container']['submit']  =  array(
+		'#type' => 'submit' ,  
+		'#value' => t('PRINT') ,
+	);
+	
+	return $form ; 
+}
+
+/**
+* get months options
+*/
+function _path_report_get_months_options() {
+  $year = $_POST['year'] ; 
+  $months = _get_months_options($year) ; 
+  $form_state = array('storage' => NULL, 'submitted' => FALSE);
+  $form_build_id = $_POST['form_build_id'];
+  // Step #4.
+  $form = form_get_cache($form_build_id, $form_state); 
+  // Preparing for #5.
+  $args = $form['#parameters'];
+  $form_id = array_shift($args);
+  $form_state['post'] = $form['#post'] = $_POST;
+  $form['#programmed'] = $form['#redirect'] = FALSE;
+  
+  // Step #6 and #7 and #8.
+  $form = drupal_rebuild_form($form_id, $form_state, $args, $form_build_id);
+  $form['option-container']['month']['#options'] = $months ; 
+  // Step #9.
+  $month_form = $form['option-container']['month'];
+  unset($month_form['#prefix'], $month_form['#suffix']);
+  $output = theme('status_messages') . drupal_render($month_form);
+  // Final rendering callback.
+   drupal_json(array('status' => TRUE , 'data' => $output )) ; 
+}	
+
+
+
+/**
+* joury staff attendance report
+*/
+function joury_report_staff_attendance_form_validate($form, &$form_state) {
+	if(empty($form['#post']['month'])) {
+		form_set_error('month', 'Please select the month'); 	
+	}
+	if(empty($form['#post']['year'])) {
+		form_set_error('year', 'Please select the year'); 	
+	}
+	if(empty($form['#post']['employeeid'])) {
+		form_set_error('employeeid', 'Please insert the employee id'); 	
+	}		
+}
+
+/**
+* joury client dept payment form validate
+*/
+function joury_report_client_debt_payment_form_validate($form,$form_state){
+	if(empty($form['#post']['datefrom']) ){
+		form_set_error('datefrom' , 'PLEASE INSERT THE FROM-date') ; 
+	}
+	if(empty($form['#post']['dateto']) ){
+		form_set_error('dateto' , 'PLEASE INSERT THE TO-date') ; 
+	}
+	if(empty($form['#post']['clientid']) ){
+		form_set_error('clientid' , 'PLEASE SELECT THE CLIENT') ; 
+	}	
+}	
+
+
+
+/**
+* joury canceled services validate
+*/
+
+function joury_report_canceled_services_form_validate($form,$form_state){
+	if(empty($form['#post']['datefrom']) ){
+		form_set_error('datefrom' , 'PLEASE INSERT THE FROM-date') ; 
+	}
+	if(empty($form['#post']['dateto']) ){
+		form_set_error('dateto' , 'PLEASE INSERT THE TO-date') ; 
+	}
+	if(empty($form['#post']['clientid']) ){
+		form_set_error('clientid' , 'PLEASE SELECT THE CLIENT') ; 
+	}
+}
+
+
+/**
+* joury services import report form validate 
+*/
+function joury_report_services_imports_form_validate($form , $form_state){
+	if(empty($form['#post']['date-from']) ){
+		form_set_error('date-from' , 'PLEASE INSERT THE FROM-date') ; 
+	}
+	if(empty($form['#post']['date-to']) ){
+		form_set_error('date-to' , 'PLEASE INSERT THE TO-date') ; 
+	}
+}
+
+
+/**
+* joury services import report form validate 
+*/
+function joury_report_stores_form_validate($form , $form_state){
+	if(empty($form['#post']['datefrom']) ){
+		form_set_error('datefrom' , 'PLEASE INSERT THE FROM-date') ; 
+	}
+	if(empty($form['#post']['dateto']) ){
+		form_set_error('dateto' , 'PLEASE INSERT THE TO-date') ; 
+	}
+}
+
+/**
+* joury services import report form validate 
+*/
+function joury_report_showrooms_form_validate($form , $form_state){
+	if(empty($form['#post']['datefrom']) ){
+		form_set_error('datefrom' , 'PLEASE INSERT THE FROM-date') ; 
+	}
+	if(empty($form['#post']['dateto']) ){
+		form_set_error('dateto' , 'PLEASE INSERT THE TO-date') ; 
+	}
+}
+
+
+/**
+* joury staff report form validate 
+*/
+function joury_report_staff_form_validate($form , $form_state){
+	if(empty($form['#post']['datefrom']) ){
+		form_set_error('datefrom' , 'PLEASE INSERT THE FROM-date') ; 
+	}
+	if(empty($form['#post']['dateto']) ){
+		form_set_error('dateto' , 'PLEASE INSERT THE TO-date') ; 
+	}
+}
+
+
+/**
+* joury staff attendance report form submit
+*/
+function joury_report_staff_attendance_form_submit($form, &$form_state) {
+	$_SESSION['employeeid'] = $form['#post']['employeeid'] ; 
+	$_SESSION['month'] = $form['#post']['month'] ; 
+	$_SESSION['year'] = $form['#post']['year'] ; 
+}
+
+
+/**
+* joury services import report form submit 
+*/
+function joury_report_services_imports_form_submit($form , $form_state){
+	setcookie('center-name',$form['#post']['center-name'],time()+(7));
+	setcookie('service-id',$form['#post']['service-id'],time()+(7));
+	setcookie('date-from',$form['#post']['date-from'],time()+(7));
+	setcookie('date-to',$form['#post']['date-to'],time()+(7));
+}
+
+
+/**
+* joury services import report form validate 
+*/
+function joury_report_stores_form_submit($form , $form_state){
+	$_SESSION['storename'] = $form['#post']['storename'] ; 
+	$_SESSION['operation'] = $form['#post']['operation'] ; 
+	$_SESSION['datefrom'] = $form['#post']['datefrom'] ; 
+	$_SESSION['dateto'] = $form['#post']['dateto'] ; 
+}
+
+/**
+* joury services import report form validate 
+*/
+function joury_report_showrooms_form_submit($form , $form_state){
+	$_SESSION['showroomname'] = $form['#post']['showroomname'] ; 
+	$_SESSION['operation'] = $form['#post']['operation'] ; 
+	$_SESSION['datefrom'] = $form['#post']['datefrom'] ; 
+	$_SESSION['dateto'] = $form['#post']['dateto'] ; 
+}
+
+
+/**
+* joury services import report form validate 
+*/
+function joury_report_staff_form_submit($form , $form_state){
+	$_SESSION['staffid'] = $form['#post']['staffid'] ; 
+	$_SESSION['storeid'] = $form['#post']['storeid'] ; 
+	$_SESSION['datefrom'] = $form['#post']['datefrom'] ; 
+	$_SESSION['dateto'] = $form['#post']['dateto'] ; 
+}
+
+/**
+* joury canceled services submit
+*/
+
+function joury_report_canceled_services_form_submit($form,$form_state){
+	$_SESSION['clientid'] = $form['#post']['clientid'] ; 
+	$_SESSION['datefrom'] = $form['#post']['datefrom'] ; 
+	$_SESSION['dateto'] = $form['#post']['dateto'] ; 
+}
+
+
+/**
+* joury client debt payment submit
+*/
+
+function joury_report_client_debt_payment_form_submit($form,$form_state){
+	$_SESSION['clientid'] = $form['#post']['clientid'] ; 
+	$_SESSION['datefrom'] = $form['#post']['datefrom'] ; 
+	$_SESSION['dateto'] = $form['#post']['dateto'] ; 
+}
+
+/**
+* get store data if the operation requests
+*/
+function _get_store_requests_log($storename,$datefrom,$dateto){
+	if($storename == 'all'){
+	$result_handle = db_query("select * from {joury_store_requests} where `date` between '%s' and '%s'" ,$datefrom ,$dateto) ; 	
+	}else{
+	$result_handle = db_query("select * from {joury_store_requests} where `storename` = '%s' and `date` between '%s' and '%s'" , $storename,$datefrom ,$dateto) ; 		
+	}			
+	
+	while($result_obj = db_fetch_object($result_handle)){
+		$result[] = $result_obj ; 	
+	}	
+	
+	return $result ;
+	
+}	
+
+
+/**
+* get store data if the operation requests
+*/
+function _get_showroom_requests_log($showroomname,$datefrom,$dateto){
+	if($showroomname == 'all'){
+	$result_handle = db_query("select * from {joury_showoom_requests} where `date` between '%s' and '%s'" ,$datefrom ,$dateto) ; 	
+	}else{
+	$result_handle = db_query("select * from {joury_showoom_requests} where `showroomname` = '%s' and `date` between '%s' and '%s'" , $showroomname,$datefrom ,$dateto) ; 		
+	}			
+	
+	while($result_obj = db_fetch_object($result_handle)){
+		$result[] = $result_obj ; 	
+	}	
+	
+	return $result ;
+	
+}	
+
+
+
+/**
+* get store data if the operation imports
+*/
+function _get_store_imports_log($storename,$datefrom,$dateto){
+	if($storename == 'all'){
+	$result_handle = db_query("select * from {joury_log_store_imports} where `date` between '%s' and '%s'" ,$datefrom ,$dateto) ; 	
+	}else{
+	$result_handle = db_query("select * from {joury_log_store_imports} where `storename` = '%s' and `date` between '%s' and '%s'" , $storename,$datefrom ,$dateto) ; 		
+	}			
+	
+	while($result_obj = db_fetch_object($result_handle)){
+		$result[] = $result_obj ; 	
+	}	
+	
+	return $result ;
+	
+}	
+
+
+/**
+* get showroom data if the operation imports
+*/
+function _get_showroom_imports_log($showroomname,$datefrom,$dateto){
+	if($showroomname == 'all'){
+	$result_handle = db_query("select * from {joury_log_showroom_imports} where `date` between '%s' and '%s'" ,$datefrom ,$dateto) ; 	
+	}else{
+	$result_handle = db_query("select * from {joury_log_showroom_imports} where `showroomname` = '%s' and `date` between '%s' and '%s'" , $showroomname,$datefrom ,$dateto) ; 		
+	}			
+	
+	while($result_obj = db_fetch_object($result_handle)){
+		$result[] = $result_obj ; 	
+	}	
+	
+	return $result ;
+	
+}	
+
+/**
+* Get Staff Rent Data
+*/
+function _get_staff_rent_log($staffid,$storeid,$datefrom,$dateto){
+	if($staffid == 'all' && $storeid == 'all'){
+	$result_handle = db_query("select * from {joury_staff_products} where `date` between '%s' and '%s'" ,$datefrom ,$dateto) ; 	
+	}elseif($staffid == 'all' && $storeid != 'all'){
+	$result_handle = db_query("select * from {joury_staff_products} where `storeid` = %d and `date` between '%s' and '%s'" ,$storeid,$datefrom ,$dateto) ; 	
+	}elseif($staffid != 'all' && $storeid == 'all'){
+	$result_handle = db_query("select * from {joury_staff_products} where `staffid` = %d and `date` between '%s' and '%s'" ,$staffid,$datefrom ,$dateto) ; 	
+	}else{
+	$result_handle = db_query("select * from {joury_staff_products} where `staffid` = %d  and `storeid` = %d and `date` between '%s' and '%s'" , $staffid,$storeid,$datefrom ,$dateto) ; 		
+	}			
+	
+	while($result_obj = db_fetch_object($result_handle)){
+		$result[] = $result_obj ; 	
+	}	
+	
+	return $result ;
+}	
+
+/**
+* Get Kenet Card Id
+*/
+function  _get_kenet_card_id($rid){
+	$result_handle = db_query("select `card_id` from {joury_register_kenet} where `register_id` = %d" , $rid) ; 
+	$result_obj = db_fetch_object($result_handle) ; 
+	if(!empty($result_obj->card_id)){
+		return 	$result_obj->card_id ; 
+	}else{
+		return '-' ; 	
+	}			
+}	
+	
+	
+	
+/**
+* Get service canceled data
+*/	
+function  _get_canceled_services($clientid,$datefrom,$dateto){
+	$result_handle  = db_query("select * from {joury_cancle_service}  where `cid` = %d and `date` between '%s' and '%s'"
+	,$clientid,$datefrom,$dateto) ; 
+	while($result_obj = db_fetch_object($result_handle)){
+		$result[] = $result_obj ; 
+	}
+	
+	return $result ;
+}
+
+
+function _get_client_debt_payment_log($clientid,$datefrom,$dateto){
+	$result_handle  = db_query("select * from {joury_clients_debts_log}  where `client_id` = %d and `date` between '%s' and '%s'"
+	,$clientid,$datefrom,$dateto) ; 
+	while($result_obj = db_fetch_object($result_handle)){
+		$result[] = $result_obj ; 
+	}
+	
+	return $result ;	
+}	
+	
+
+/*
+* return all the centers available for this user
+*/
+function _report_get_form_center_options() {
+	global $user ; 
+	$user_center =  $user->centerdetails ;
+	if(user_access("override centers division")) {
+		$center_options_handler = db_query("select * from {joury_centers}") ; 
+	}else{
+		$center_options_handler = db_query("select * from {joury_centers} where `centername` = '%s'", $user_center) ; 
+	}	
+	$centers['all'] =  '---ALL---' ; 
+	while( $center_option_obj = db_fetch_object($center_options_handler)){
+			$centers[$center_option_obj->centername] = check_plain($center_option_obj->centername) ; 	
+	}
+	return $centers ;	
+}	 
+
+
+/*
+* return all the stores available for this user
+*/
+function _report_get_form_store_options() {
+	global $user ; 
+	$user_center =  $user->centerdetails ;
+	if(user_access("override centers division")) {
+		$stores_options_handler = db_query("select * from {joury_stores}") ; 
+	}else{
+		$stores_options_handler = db_query("select * from {joury_stores} where `center` = '%s' ", $user_center) ; 
+	}	
+	
+	$stores['all'] =  '---ALL---' ; 
+	while( $stores_option_obj = db_fetch_object($stores_options_handler)){
+			$stores[$stores_option_obj->name] = check_plain($stores_option_obj->name) ; 	
+	}	
+	return $stores ; 
+}	
+
+
+/*
+* return all the showrooms available for this user
+*/
+function _report_get_form_showroom_options() {
+	global $user ; 
+	$user_center =  $user->centerdetails ;
+	if(user_access("override centers division")) {
+		$showrooms_options_handler = db_query("select * from {joury_showrooms}") ; 
+	}else{
+		$showrooms_options_handler = db_query("select * from {joury_showrooms} where `center` = '%s' ", $user_center) ; 
+	}	
+	
+	$showrooms['all'] =  '---ALL---' ; 
+	while( $showrooms_option_obj = db_fetch_object($showrooms_options_handler)){
+			$showrooms[$showrooms_option_obj->name] = check_plain($showrooms_option_obj->name) ; 	
+	}	
+	return $showrooms ; 
+}	
+
+
+/*
+* return all the services available for this user
+*/
+function _report_get_form_service_options() {
+	global $user ; 
+	$user_center =  $user->centerdetails ;
+	if(user_access("override centers division")) {
+		$service_options_handler = db_query("select * from {joury_salonservice}") ;
+	}else{
+	$service_options_handler = db_query("select * from {joury_salonservice} where `center` = '%s' ", $user_center) ; 
+	}	
+	 
+	$services['all'] =  '---ALL---' ; 
+	while( $service_option_obj = db_fetch_object($service_options_handler)){
+			$services[$service_option_obj->sid] = check_plain($service_option_obj->name) ; 	
+	}		
+	
+	return $services ; 
+}	
+

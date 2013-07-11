@@ -1,0 +1,4 @@
+; $Id$
+name = joury store products
+description = responsible for storing the products in the stores
+core = 6.x

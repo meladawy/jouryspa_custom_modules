@@ -1,0 +1,39 @@
+#joury-contract-table{
+width: 100%;	
+margin-top: 240px;
+margin-bottom: 200px;
+font-size: 14px;
+}	
+#joury-contract-table tr{
+padding-top: 0px;
+padding-bottom: 0px;
+margin-top: 0px;
+margin-bottom: 0px;
+width: 100%;	
+}	
+ 
+#joury-contract-table td{
+padding-top: 0px;
+padding-bottom: 0px;
+margin-top: 0px;
+margin-bottom: 0px;
+text-align: justify;
+font-size: 15px;
+}	
+#joury-contract-table td h3{
+padding: 20px;	
+
+}	
+
+#joury-contract-table td+td{
+
+}
+
+#back-home{
+	text-decoration: none;
+	color: white;
+	background: gray ; 
+	padding:20px;
+	font-weight: bolder;
+	border-radius: 8px;
+}	

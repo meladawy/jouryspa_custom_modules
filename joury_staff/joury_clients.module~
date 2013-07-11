@@ -1,0 +1,58 @@
+<?php
+// $Id$
+
+/**
+* Implementation of hook_nodeapi
+*/
+
+function joury_clients_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL){
+	switch($op) {	
+		case 'insert':
+			$nodeid = $node->nid ;  
+			$firstname = $node->title ;  
+			$lastname = $node->field_clientlastname[0]['value'] ;  
+			$birthdate = $node->field_clientbirthdate[0]['value'] ;
+			$phone = $node->field_clientphone[0]['value'] ;
+			$mobile = $node->field_clientmobile[0]['value'] ;
+			$email = $node->field_clientemail[0]['value'] ;
+			$address = $node->field_clientaddress[0]['value'] ;		 
+			db_query("insert into {joury_clients} (`nid`,`firstname`,`lastname`,`birthdate` , `phone`, `mobile`, `email`,`address`) values (%d,'%s','%s','%s','%s','%s','%s','%s')",$nodeid,$firstname,$lastname,$birthdate,$phone,$mobile,$email,$address) ;
+		break;  	
+		
+		
+		case 'update' : 
+			$nodeid = $node->nid ;  
+			$firstname = $node->title ;  
+			$lastname = $node->field_clientlastname[0]['value'] ;  
+			$birthdate = $node->field_clientbirthdate[0]['value'] ;
+			$phone = $node->field_clientphone[0]['value'] ;
+			$mobile = $node->field_clientmobile[0]['value'] ;
+			$email = $node->field_clientemail[0]['value'] ;
+			$address = $node->field_clientaddress[0]['value'] ;		 
+			db_query("update {joury_clients} set  `firstname` = '%s' , `lastname` = '%s' , `birthdate` = '%s',  `phone` = '%s', `mobile` = '%s' , `email` = '%s' ,  `address` = '%s'  where `nid` = %d ",$firstname,$lastname,$birthdate,$phone,$mobile,$email,$address, $nodeid) ; 
+		break ;  
+		
+		case 'delete' :
+			db_query("delete from {joury_clients} where `uid` = %d" , $node->nid) ; 
+		break ; 
+	}
+}	
+
+
+
+/**
+* Implementation of hook_form_alter
+*/
+
+function joury_clients_form_alter(&$form, &$form_state, $form_id){
+	
+	if($form_id == 'clients_node_form'){
+		$url = drupal_get_path('module' , 'joury_clients') ; 
+		drupal_add_css($url.'/jouryclientstyle.css') ; 
+		drupal_add_css($url.'/smoothness/jquery-ui-1.8.14.custom.css') ;
+		drupal_add_js($url.'/js/jquery-1.5.1.min.js') ; 
+		drupal_add_js($url.'/js/jquery-ui-1.8.14.custom.min.js') ; 
+		drupal_add_js($url.'/script.js') ; 
+		
+		} 	
+}

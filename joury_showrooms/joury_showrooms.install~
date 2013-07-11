@@ -1,0 +1,38 @@
+<?php
+// $Id$
+
+/**
+* Implementation of hook_install
+*/
+function joury_showrooms_install(){
+ 	drupal_install_schema('joury_showrooms'); 
+}
+
+
+/**
+* Implementation of hook_uninstall
+*/
+function joury_showrooms_uninstall(){
+ 	drupal_uninstall_schema('joury_showrooms'); 
+}
+
+
+
+/**
+* Implementation of hook_schema
+*/
+function joury_showrooms_schema(){
+	$schema['joury_showrooms'] = array(
+		'description' => 'this table control the showrooms ',
+		'fields' => array(
+			'sid' => array('type' => 'serial' , 'unsigned' => TRUE , 'not null' => TRUE,) , 
+			'nid' => array('type' => 'int' , 'unsigned' => TRUE , 'not null' => TRUE, 'default' => 0 , ) ,		
+			'name' => array('type' => 'varchar'  ,'length' => 40, 'not null' => TRUE, 'default' => '', ) ,
+			'description' => array('type' => 'varchar'  ,'length' => 250, 'not null' => TRUE, 'default' => '', ) ,	
+		), 
+		'primary key' => array('sid'),
+	
+	);
+	
+	return $schema ; 
+}

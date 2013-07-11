@@ -1,0 +1,57 @@
+<?php
+// $Id$
+
+
+/**
+* Implementation of hook_nodeapi
+*/
+
+function joury_units_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL){
+	switch($op){
+			case 'insert' :
+			if($node->type == 'units'){
+				$name = $node->title ; 
+				$nid = $node->nid ; 
+				$items =  $node->field_unitsitems[0]['value'] ;
+				db_query("insert into {joury_units} (`nid` , `unitname` , `items`)  values (%d , '%s', %d)" , $nid, $name, $items); 
+			}		
+			break; 		
+			
+			case 'update' :
+			if($node->type == 'units'){
+				$name = $node->title ; 
+				$nid = $node->nid ; 
+				$items =  $node->field_unitsitems[0]['value'] ;
+				db_query("update  {joury_units} set  `unitname` = '%s' ,`items` = %d  where `nid` = %d " ,  $name , $items,$nid); 
+			}		
+			break;
+			
+			case 'delete' :
+			if($node->type == 'units'){
+				$name = $node->title ; 
+				$nid = $node->nid ; 
+				db_query("delete from  {joury_units} where `nid` = %d " , $nid); 
+			}		
+			break;
+		
+		
+		}	
+}
+
+
+
+
+/**
+* Implementation of hook_jourymenu
+*/
+
+function joury_units_jourymenu(){
+	return array(
+	'units',
+	'joury_units',
+	array('id' => 'ID','name' => 'NAME','items' => 'NUMBER OF ITEMS'),
+	array(),
+	'',
+	'',
+	); 	
+}

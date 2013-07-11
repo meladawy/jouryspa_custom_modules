@@ -1,0 +1,219 @@
+<?php
+// $Id$
+
+
+
+/**
+* Implementation of hook_menu
+*/
+
+function joury_store_administration_menu(){
+	$menues['joury/log/suppliers/requests'] =  array(
+		'title' => t('SUPPLIERS REQUESTS LOG') , 
+		'description' => t('') , 
+		'page callback' => '_joury_suppliers_requests_status' ,
+		'access arguments' => array('menu- supplier requests log') ,
+		'type' => MENU_NORMAL_ITEM,
+	);
+	
+	$menues['joury/store/admin/current/products'] =  array(
+		'title' => t('CURRENT PRODUCTS') , 
+		'description' => t('') , 
+		'page callback' => '_joury_store_administrator_current_products' ,
+		'access arguments' => array('menu- store admin products') ,
+		'type' => MENU_NORMAL_ITEM,
+	);
+	
+	$menues['joury/store/admin/current/products/keyword'] =  array(
+		'title' => t('CURRENT PRODUCTS') , 
+		'description' => t('') , 
+		'page callback' => '_joury_store_administrator_current_products_keyword' ,
+		'access arguments' => array('access content') ,
+		'type' => MENU_CALLBACK,
+	);	
+	
+	return $menues ; 
+}
+//
+
+/**
+* hook_perm
+*/	
+function joury_store_administration_perm() {
+	return array("menu- store admin products") ; 	
+}	
+	
+	
+/**
+* Implementation of hook_theme
+*/
+function joury_store_administration_theme(){
+	return array(
+		'theme_joury_suppliers_requests_status' => array(
+			'template' => 'page_joury_suppliers_requests_status'  ,
+			'arguments' => array() ,
+		),
+		'theme_joury_store_administrator_current_products' => array(
+			'template' => 'page_joury_store_administrator_current_products',
+			'arguments' => array() , 
+		),
+	);	
+}	
+	
+	
+	
+/**
+* Private function to view current products
+*/	
+
+function _joury_store_administrator_current_products(){
+	return theme('theme_joury_store_administrator_current_products')	 ; 
+}	
+	
+/**
+* Private function for :joury/suppliers/requests/status
+*/	
+
+function _joury_suppliers_requests_status (){
+	return theme('theme_joury_suppliers_requests_status') ; 
+}	
+
+
+/**
+* Private function that print table content based on keyword
+*/
+function _joury_store_administrator_current_products_keyword(){
+	if(!empty($_POST['keyword'])){
+		$keyword = $_POST['keyword'] ; 
+		$products = _get_products_of_store_admin_content_keyword($keyword) ; 
+		$number_of_products =  count($products) ; 
+		if($number_of_products ==  0){
+				echo "<center>NO PRODUCTS</center>" ; 	
+			}else{
+				
+				for($k=0 ; $k < $number_of_products ; $k++ ){
+				$variable = rand(1,524352453);
+				echo "<tr>" ; 
+					echo "<td>" ; 
+						echo $products[$k]->productid  ; 
+					echo "</td>" ; 
+		
+					echo "<td>" ; 
+						echo $products[$k]->productname  ; 
+					echo "</td>" ; 
+				
+					echo "<td>" ; 
+						echo $products[$k]->quantity  ; 
+					echo "</td>" ; 
+					
+					echo "<td>" ; 
+						echo $products[$k]->storeprice  ; 
+					echo "</td>" ; 
+				
+					echo "<td>" ; 
+						echo $products[$k]->sellprice  ; 
+					echo "</td>" ; 	
+			
+					echo "<td >" ; 
+						echo "<input type='text' size='7' name='quantity-".$k.$variable."' id='quantity' value='1'  disabled=''/>"   ; 
+					echo "</td>" ; 
+					
+					echo "<td>" ;
+						echo "<input type='checkbox' name='select-".$k.$variable."' id='select' />"   ; 
+					echo "</td>" ; 		
+		
+					echo "<td style='display:none;' >" ; 
+				   	echo "<input type='hidden' name='exist-quantity-".$k.$variable."' id='exist-quantity' value='".$products[$k]->quantity."' />"   ; 
+						echo "<input type='hidden' name='storeprice-".$k.$variable."' id='storeprice' value='".$products[$k]->storeprice."' />"   ; 
+						echo "<input type='hidden' name='rawid-".$k.$variable."' id='rawid' value='".$products[$k]->id."' />"   ; 
+						echo "<input type='hidden' name='productid-".$k.$variable."' id='rowid' value='".$products[$k]->productid."' />"   ; 
+					echo "</td>" ; 
+				echo "</tr>" ; 
+			}	
+
+		}	
+	}
+}	
+
+
+
+/**
+*
+*/
+function _get_suppliers_requests_log() {
+	 $result_handle = db_query("select * from `joury_requests_from_suppliers_log` order by id desc limit 40") ;
+ while ($result_object = db_fetch_object($result_handle)) {
+ 		$result_arr[] = $result_object ; 
+ 	} 
+ 	return $result_arr ; 
+}	
+
+
+
+/**
+* private function that check if this product exist in this place before or not
+*/
+function _check_product_in_store_admin($product){
+	$result_handle = db_query("select count(*) from `joury_store_administration_content` where `productid` = %d " ,$product) ; 
+	$result = db_fetch_array($result_handle) ; 
+	if($result['count(*)'] == 1 ){
+		return  1 ; 
+	}else{
+		return 0 ; 	
+	}		
+}	
+
+/**
+* private function that check if this product exist in this place before or not
+*/
+function _get_product_in_store_admin($product){
+	$result_handle = db_query("select * from `joury_store_administration_content` where `productid` = %d " ,$product) ; 
+	$result = db_fetch_object($result_handle) ; 
+	return $result ; 
+}	
+
+/**
+* private function to get the products in store admin
+*/
+
+function _get_products_of_store_admin_content () {
+	$result_handle = db_query("select * from `joury_store_administration_content` ");
+	while($result_obj = db_fetch_object($result_handle)) {
+		$result_arr[] = $result_obj ; 	
+	}	 	
+	return $result_arr ; 
+}	
+
+
+
+/**
+* private function to get the products in store admin
+*/
+
+function _get_products_of_store_admin_content_keyword ($keyword) {
+	$result_handle = db_query("select * from `joury_store_administration_content` where `productname` like '%%%s%%' " , $keyword);
+	while($result_obj = db_fetch_object($result_handle)) {
+		$result_arr[] = $result_obj ; 	
+	}	 	
+	return $result_arr ; 
+}	
+
+
+/**
+* Get Quantity of Raw Id
+*/
+function _get_quantity_of_store_admin_rawid($rawid) {
+	$result_handle = db_query("select `quantity` from `joury_store_administration_content` where `id` = %d",$rawid ) ;
+	$result_obj = db_fetch_object($result_handle) ;
+	return $result_obj->quantity ;   
+}
+
+
+/**
+* get product quantity
+*/
+function _get_product_quantity_from_admin_store($pid){
+	$result_handle = db_query("select `quantity` from `joury_store_administration_content` where `productid` = %d",$pid ) ;
+	$result_obj = db_fetch_object($result_handle) ;
+	return $result_obj->quantity ;  
+}

@@ -1,0 +1,5 @@
+; $Id$
+name = joury api
+description = this module provide some api functions and hook that help me  in organized development
+package = joury spa
+core = 6.x 

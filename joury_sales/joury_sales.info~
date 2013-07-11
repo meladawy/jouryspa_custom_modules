@@ -1,0 +1,4 @@
+; $Id$
+name = joury sales
+description = control any thing connected to sales department
+core = 6.x

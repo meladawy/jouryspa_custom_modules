@@ -1,0 +1,41 @@
+<?php
+// $Id$
+
+/**
+* Implementation of hook_install
+*/
+function joury_showroom_install(){
+ 	drupal_install_schema('joury_showroom'); 
+}
+
+
+/**
+* Implementation of hook_uninstall
+*/
+function joury_showroom_uninstall(){
+ 	drupal_uninstall_schema('joury_showroom'); 
+}
+
+
+/**
+* Implementation of hook_schema
+*/
+function joury_showroom_schema(){
+	$schema['joury_showroom'] = array(
+		'description' => 'this table control the showrooms ',
+		'fields' => array(
+			'id' => array('type' => 'serial' , 'unsigned' => TRUE , 'not null' => TRUE,) , 
+			'showroomid' => array('type' => 'int' , 'unsigned' => TRUE , 'not null' => TRUE, 'default' => 0 , ) ,
+			'showroomname' => array('type' => 'varchar' ,'length' => 40, 'not null' => TRUE, 'default' => '' , ) ,
+			'productid' => array('type' => 'int' , 'unsigned' => TRUE , 'not null' => TRUE, 'default' => 0 , ) ,	
+			'productname' => array('type' => 'varchar' ,'length' => 40, 'not null' => TRUE, 'default' => '' , ) ,	
+			'quantity' => array('type' => 'float' , 'unsigned' => TRUE , 'not null' => TRUE, 'default' => 0.0 , ) ,	
+			'price' => array('type' => 'float' , 'unsigned' => TRUE , 'not null' => TRUE, 'default' => 0.0 , ) ,	
+
+		), 
+		'primary key' => array('id'),
+	
+	);
+	
+	return $schema ; 
+}

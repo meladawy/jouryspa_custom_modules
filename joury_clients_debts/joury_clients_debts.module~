@@ -1,0 +1,295 @@
+<?php
+// 
+
+/**
+* Implementation of hook_menu
+*/
+function joury_clients_debts_menu(){
+	$menu['joury/debt/repayment'] = array(
+		'title' => t('Debt repayment') , 
+		'description' => t('Clients Debt repayment') , 
+		'page callback' => '_joury_debt_repayment',
+		'access arguments' => array('menu- debt repayment') ,
+		'type' => MENU_NORMAL_ITEM , 	
+	); 
+	
+	$menu['generate/client/debts/table'] = array(
+		'page callback' =>  '_generate_client_debts_table' , 
+		'access arguments' => array('access content') , 
+		'type' => MENU_CALLBACK , 
+ 	) ;	
+	return $menu ; 	
+}	
+/**
+* Implementation of hook_perm
+*/
+function joury_clients_debts_perm() {
+	return array("menu- debt repayment") ; 	
+}	
+
+/**
+* function for page  joury/debt/repayment
+*/
+function _joury_debt_repayment(){
+	$module_path = drupal_get_path('module' , 'joury_clients_debts') ;
+	$frontpage = url('' , array('absolute' => TRUE) );
+	drupal_add_js($module_path."/joury_clients_debts.js") ;  
+	drupal_add_js(array('frontpage' => $frontpage),'setting')  ;
+	drupal_add_css($module_path."/joury_clients_debts.css")  ;
+	return drupal_get_form('joury_debt_repayment_form') ; 		
+}	
+
+
+/**
+* generate client service table
+*/
+function _generate_client_debts_table(){
+	$clientid = $_POST['clientid'] ; 
+	if(!empty($clientid)){
+		$client_services_debt = _get_client_service_dept($clientid) ; 
+		$client_data = _get_client_by_id($clientid) ; 
+		
+		if(count($client_services_debt) ==0){
+			echo "<div class='message error'><center>NO DATA</center> </div>" ; 	
+		}else{
+			echo "<center><table id='debt-repayment-table'>" ; 
+				echo "<tr>" ; 
+				
+					
+					echo "<td id='head-row'>" ;
+						echo "SERVICE NAME" ; 					
+					echo "</td>" ; 
+					
+					echo "<td id='head-row'>" ;
+						echo "SERVICE REGISTER DATE" ; 	
+					echo "</td>" ;  
+					
+					echo "<td id='head-row'>" ;
+						echo "SERVICE PRICE" ; 	
+					echo "</td>" ;  
+					
+					echo "<td id='head-row'>" ;
+						echo "PAID" ; 	
+					echo "</td>" ;  
+
+					echo "<td id='head-row'>" ;
+						echo "REPAYMENT AMOUNT" ; 	
+					echo "</td>" ;  
+					
+					echo "<td id='head-row'>" ;
+						echo "CASHIER" ; 	
+					echo "</td>" ;  
+					
+					echo "<td id='head-row'>" ;
+						echo "CENTER NAME" ; 	
+					echo "</td>" ;  
+					
+					echo "<td id='head-row'>" ;
+						echo "REPAY" ; 	
+					echo "</td>" ;  
+					
+										
+				echo "</tr>" ; 			
+			
+			foreach($client_services_debt as $service){
+				$service_register_data =  _get_register_data_by_rid($service->rid) ; 
+				$servicedata = _get_service_by_id($service_register_data->sid) ; 
+				$cashierdata = user_load($service_register_data->author) ; 
+				echo "<tr>" ; 
+					
+					echo "<td >" ;
+						echo $servicedata->name ; 					
+					echo "</td>" ; 
+					
+					echo "<td >" ;
+						echo  $service_register_data->date ; 	
+					echo "</td>" ;  
+					
+					echo "<td >" ;
+						echo  $servicedata->price; 	
+					echo "</td>" ;  
+					
+					echo "<td >" ;
+						echo $service_register_data->paid ; 	
+					echo "</td>" ;  
+
+					echo "<td >" ;
+						echo "<input type='text'  name='repay-".$service->id."' style='text-align:center;' size='5' value='".$service->debt_quantity."'/>"  ; 	
+					echo "</td>" ;  
+					
+					echo "<td >" ;
+						echo $cashierdata->name ; 		
+					echo "</td>" ;  
+					
+					echo "<td >" ;
+						echo $service_register_data->centername; 		
+					echo "</td>" ;  
+					
+					echo "<td >" ;
+						echo "<input type='checkbox'  name='id-".$service->id."'/>"  ; 	
+					echo "</td>" ;  		
+				echo "</tr>" ; 
+			}	
+			echo "</table></center>" ;  
+		}		
+	}	
+}
+
+
+
+
+
+
+/**
+* joyry/debt/repayment form
+*/
+function joury_debt_repayment_form($form_state){
+	$clients = _get_clients_that_register_service_with_debt() ; 
+	
+	$form['container'] =  array(
+		'#type' => 'fieldset' ,
+		'#title' => t('DEBT REPAYMENT') ,
+		'#collapsible' => TRUE ,
+		'#description' => 'Add the configuration' ,  
+	) ; 
+	$form['container']['clientid'] =  array(
+		'#type' => 'select' ,
+		'#title' => t('CLIENT NAME') ,
+		'#options' => $clients ,
+		'#description' => 'Add the client name' ,  
+	) ; 
+	$form['container']['services_debt'] =  array(
+		'#type' => 'markup' ,
+		'#value' => "<div id='client-services_debt'></div>" ,
+	) ; 
+	
+	$form['container']['submit'] =  array(
+		'#type' => 'submit' ,
+		'#value' => 'SAVE' ,  
+	) ; 
+	
+	
+	return $form ; 	
+}	
+
+/**
+* form validate
+*/
+function joury_debt_repayment_form_validate($form, $form_state){
+	if($form['#post']['clientid'] == '' ){
+		form_set_error('clientid', 'Please insert the client id ') ; 
+	}	
+	foreach($form['#post'] as $key=>$val){
+		if($val == 'on') {
+			$id[] = substr($key,3,2452345)  ; 	
+		}		
+	}	
+	if($form['#post']['clientid'] != ''  &&  count($id) == 0){
+		form_set_error('clientid', 'Please select the service you want to pay the debt for..') ; 
+	}		
+}	
+
+
+/**
+* form submit
+*/
+function joury_debt_repayment_form_submit($form, $form_state){
+	foreach($form['#post'] as $key=>$val){
+		if($val == 'on') {
+			$debt_id = substr($key,3,2452345)  ; 
+			$id[] = substr($key,3,2452345)  ; 
+		}		
+	}
+	
+	if(count($id) > 0){
+		foreach($id as $key=>$val){
+			$repay_amount = 	$form['#post']['repay-'.$val] ;
+			$debt_data = _get_client_debt_data_by_id($val) ; 
+			$register_data = _get_register_data_by_rid($debt_data->rid) ; 
+			$client_data   = _get_client_by_id($register_data->cid) ; 	
+			$service_data = _get_service_by_id($register_data->sid) ;
+			$timestamp = time() ; 
+			$date = date("m/d/Y h:i a") ; 
+			global $user ; 
+			
+			
+			// insert the log
+			db_query("insert into {joury_clients_debts_log} (`client_id` ,`cashier_id` , `register_id` , `date` , `pay_amount`)
+			values
+			(%d,%d,%d,'%s',%f)",
+			$register_data->cid , $user->uid , $debt_data->rid , $date,	$repay_amount
+			) ; 			
+			
+			
+			db_query("insert into {joury_bill} (`type`,`clientid` , `clientname` , `service_rid` , `servicename` ,`cashier` , `date` , `quantity` , `sellprice`, `price` ,`totalprice` , `by`) 
+			values ('%s',%d , '%s' , %d , '%s' , %d , '%s' , %d , %f, %f, %f, %d ) ", 
+			'DEBT',$client_data->cid , $client_data->firstname." ".$client_data->lastname,$service_data->sid, $service_data->name, $user->uid,
+			$date , 1,$debt_data->debt_quantity , $repay_amount, $repay_amount , $user->uid   
+			) ; 
+			if($repay_amount == ($debt_data->debt_quantity)){
+				db_query("update {joury_client_services_register} set `paid` = `paid` + %f where `id` =  %d" ,$repay_amount,$debt_data->rid ) ;
+				db_query("update {joury_bill} set `totalprice` = `totalprice` + %f where `service_rid` =  %d " ,$repay_amount,$debt_data->rid ) ;
+				db_query("update {joury_clients_debts} set `status` = 1, `debt_quantity` = `debt_quantity` - %f   where `id` =  %d" ,$repay_amount, $val ) ; 
+				db_query("delete from {joury_clients_debts} where `id`  = %d" , $val ) ; 
+			}elseif($repay_amount < ($debt_data->debt_quantity)){
+				db_query("update {joury_clients_debts} set `debt_quantity` = `debt_quantity` - %f where `id` =  %d" ,$repay_amount,$val ) ;
+				db_query("update {joury_client_services_register} set `paid` = `paid` + %f where `id` =  %d" ,$repay_amount,$debt_data->rid ) ;
+			}	
+		}	
+		drupal_set_message("<div class='message ok'><center>SUCCESSFULY PAID..CHECK THE BILL PAGE</center></div>") ; 		
+	}		
+}	
+
+
+function _get_clients_that_register_service_with_debt(){
+	$result_handle =  db_query("select * from {joury_clients_debts} where `status` = 0 group by cid") ; 	
+	while($result_obj  =  db_fetch_object($result_handle)){
+		$clientsid[] =	$result_obj->cid ; 
+	}	
+	$clients[''] = 'select-client' ; 
+	foreach((array) $clientsid as  $key => $val){
+		$clientname  = _get_client_name($val) ; 	
+		$clients[$val] = $clientname ; 
+	}	
+	return $clients ; 	
+}
+
+
+/**
+* get the dept of the current client
+*/
+
+function _get_client_service_dept($clientid){
+	$result_handle = db_query("select * from {joury_clients_debts} where `status` = 0  and `cid` =  %d" , $clientid) ; 
+	while($result_obj = db_fetch_object($result_handle)){
+		$result[] = $result_obj ; 	
+	}
+	return 	$result ; 	
+}	
+
+
+
+/**
+* get client debt data by id
+*/
+function _get_client_debt_data_by_id($id){
+	$result_handle = db_query("select * from {joury_clients_debts} where `status` = 0  and `id` =  %d" , $id) ; 
+	while($result_obj = db_fetch_object($result_handle)){
+		$result = $result_obj ; 	
+	}
+	return 	$result ; 
+}
+
+
+/**
+* get client debt by id
+*/
+function _get_balance_of_client_id($clientid){
+	$result_handle = db_query("select * from {joury_clients_debts} where `status` = 0  and `cid` =  %d" , $clientid) ; 
+	static $balance = 0 ; 
+	while($result_obj = db_fetch_object($result_handle)){
+		$balance  += $result_obj->debt_quantity ; 	
+	}
+	return 	$balance ; 
+}	
+

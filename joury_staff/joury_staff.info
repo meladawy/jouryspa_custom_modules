@@ -1,0 +1,6 @@
+; $Id$
+
+name = joury staff
+description = create staff schema and add staff content
+package = joury spa
+core = 6.x

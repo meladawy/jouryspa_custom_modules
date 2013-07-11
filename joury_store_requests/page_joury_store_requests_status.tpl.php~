@@ -1,0 +1,100 @@
+<?php
+// $Id$
+$module_path =  drupal_get_path('module' , 'joury_store_administration') ; 
+$siteurl = url('', array('absolute' => TRUE)) ; 
+$requests = _get_store_requests_status() ; 
+$number_of_requests =  count($requests) ; 
+drupal_add_js( array('url' => $siteurl) , 'setting') ; 
+drupal_add_css($module_path."/joury_store_administration.css") ; 
+
+if($number_of_requests ==  0){
+	echo "<center>NO REQUESTS</center>" ; 	
+}else{	
+echo "<center>" ; 
+echo "<table id='page-suppliers-table'>" ; 
+	echo "<tr id='page-suppliers-table-row-head'>" ; 
+	
+		echo "<td>" ; 
+			echo "ORDER ID" ; 
+		echo "</td>" ; 
+		
+		echo "<td>" ; 
+			echo "DATE" ; 
+		echo "</td>" ; 
+				
+		echo "<td>" ; 
+			echo "STORE" ; 
+		echo "</td>" ; 
+					
+		echo "<td>" ; 
+			echo "PRODUCT" ; 
+		echo "</td>" ; 
+				
+		echo "<td>" ; 
+			echo "QUANTITY" ; 
+		echo "</td>" ; 		
+						
+		echo "<td>" ; 
+			echo "STATUS" ; 
+		echo "</td>" ; 	
+						
+		echo "<td>" ; 
+			echo "NOTE" ; 
+		echo "</td>" ; 
+						
+		echo "<td>" ; 
+			echo "AUTHOR" ; 
+		echo "</td>" ; 
+		
+	echo "</tr>" ; 
+
+for($k=0 ; $k < $number_of_requests ; $k++ ){
+	echo "<tr>" ; 
+		echo "<td>" ; 
+			echo $requests[$k]->orderid  ; 
+		echo "</td>" ; 
+		
+		echo "<td>" ; 
+			echo $requests[$k]->date  ; 
+		echo "</td>" ; 
+				
+		echo "<td>" ; 
+			echo $requests[$k]->storename  ; 
+		echo "</td>" ; 
+					
+		echo "<td>" ; 
+			echo $requests[$k]->productname  ; 
+		echo "</td>" ; 
+				
+		echo "<td>" ; 
+			echo $requests[$k]->quantity  ; 
+		echo "</td>" ; 		
+		
+		echo "<td>" ;
+			echo $requests[$k]->author  ; 
+		echo "</td>" ; 
+		
+		echo "<td>" ; 
+			echo nl2br($requests[$k]->note)  ; 
+		echo "</td>" ; 		
+		
+		if($requests[$k]->status == 'CANCELED'){ 
+		echo "<td class='message error'>" ; 
+			echo $requests[$k]->status  ; 
+		echo "</td>" ;
+		}else{
+		echo "<td class='message ok'>" ; 
+			echo $requests[$k]->status  ; 
+		echo "</td>" ;			
+		}	 	
+						
+								
+	echo "</tr>" ; 
+}	
+
+
+
+echo "</table>" ; 
+echo "</center>" ; 
+
+}

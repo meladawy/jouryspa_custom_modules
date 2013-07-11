@@ -1,0 +1,150 @@
+<?php
+// $Id$
+
+/**
+* Implementation of hook_menu
+*/
+function joury_print_bill_contract_menu(){
+	$menu['joury/print/bill-contract'] = array(	
+		'title' => t('PRINT BILL/CONTRACT') , 
+		'description' => '' , 
+		'page callback' => 'joury_print_bill_contract' , 
+		'access arguments' => array('menu- print bill-contract'),
+		'type' => MENU_NORMAL_ITEM ,  
+	) ; 
+	$menu['joury/print/bill'] = array(
+		'title' => t('PRINT BILL') , 
+		'description' => '' , 
+		'page callback' => 'joury_print_bill' , 
+		'access arguments' => array('menu- print bill-contract'),
+		'type' => MENU_CALLBACK ,  
+	) ; 
+	return $menu ; 
+}	
+
+/**
+* hook_perm
+*/
+function joury_print_bill_contract_perm() {
+	return array("menu- print bill-contract") ;  	
+}	
+
+
+
+/**
+* Implementation of hook_theme
+*/
+function joury_print_bill_contract_theme(){
+	return array( 
+		'theme_joury_print_bill_contract' => array(
+			'template' => 'page_joury_print_bill_contract' , 
+			'arguments' => array(1) , 
+		),
+		'theme_joury_print_bill' => array(
+			'template' => 'page_joury_print_bill' , 
+			'arguments' => array(1) , 
+		),		
+		
+	);	
+}	
+
+
+/**
+* Print bill/contract submit function
+*/
+function joury_print_bill_contract(){
+	return theme('theme_joury_print_bill_contract') ;	
+}
+
+
+/**
+* print Bill page
+*/
+function joury_print_bill() {
+	return theme('theme_joury_print_bill') ;		
+}	
+
+/**
+* Print bill/contract form
+*/
+function joury_print_bill_contract_form ($form_state) {
+	$options = array('bill' => 'Bill' , 'contract' => 'Contract') ;
+	
+	$form['container'] = array(
+		'#type' => 'fieldset' , 
+		'#title' => t('CONFIGURATION') , 
+		'#description' => t('The configuration of print bill/contract') ,
+		'#collapsible' => TRUE , 
+	); 
+
+	$form['container']['type'] = array(
+		'#type' => 'select' , 
+		'#title' => t('PRINT') , 
+		'#description' => t('Select what you want to print') ,
+		'#options' => $options,  
+	);
+	
+	$form['container']['date'] = array(
+		'#type' => 'textfield' , 
+		'#title' => t('DATE') , 
+		'#description' => t('The date of registration <br/> <strong>E.g:</strong> 08/04/2011') ,
+	);
+	
+	$form['container']['submit'] = array(
+		'#type' => 'submit' , 
+		'#value' => t('GO') , 
+	); 		 	
+	 	
+	
+	
+	return $form ; 	
+}	
+
+
+/**
+* Print bill/contract validate function
+*/
+function joury_print_bill_contract_form_validate($form,$form_state) {
+	if(empty($form['#post']['date'])){
+		form_set_error('date' , 'Please insert the Date') ; 	
+	}
+	
+	if(strlen($form['#post']['date']) != 10){
+		form_set_error('date' , 'Wrong Date format !!') ; 	
+	}
+	
+}	
+
+/**
+* Print bill/contract submit function
+*/
+function joury_print_bill_contract_form_submit($form,$form_state) {
+	$option_selected = $form['#post']['type'] ; 
+	$date = $form['#post']['date'] ; 
+	
+	if($option_selected == 'bill') {
+		$bills_with_date = _get_bill_data_with_date($date) ;
+		$_SESSION['bill_data'] = $bills_with_date ; 
+		return ; 
+	}
+	
+	if($option_selected == 'contract') {
+		$contracts_with_date = _get_contract_data_with_date($date) ;
+		$_SESSION['contract_data'] = $contracts_with_date ; 
+		return ; 
+	}
+	
+}
+
+
+/**
+* get bills of primary bill
+*/
+function _get_bills_of_primarybill($primary_bill) {
+	$result_handle = db_query("select bills_id from {joury_bill_primary} where `id` = %d" , $primary_bill);
+	$result_obj = 	db_fetch_object($result_handle) ; 
+	return $result_obj->bills_id ; 
+}	 
+
+
+

@@ -1,0 +1,4 @@
+name =  print bill contract
+description = this module make a page for printing bill and contract
+core = 6.x
+package  = joury spa

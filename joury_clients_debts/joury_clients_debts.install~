@@ -1,0 +1,53 @@
+<?php
+// $Id$
+
+/**
+* Implementation of hook_install
+*/
+function joury_clients_debts_install(){
+ 	drupal_install_schema('joury_clients_debts'); 
+}
+
+
+/**
+* Implementation of hook_uninstall
+*/
+function joury_clients_debts_uninstall(){
+ 	drupal_uninstall_schema('joury_clients_debts'); 
+}
+
+
+/**
+* Implementation of hook_schema
+*/
+function joury_clients_debts_schema(){
+	$schema['joury_clients_debts'] = array(
+		'description' => 'this table control the salon services ',
+		'fields' => array(
+			'id' => array('type' => 'serial' , 'unsigned' => TRUE , 'not null' => TRUE,) , 
+			'cid' => array('type' => 'int' , 'unsigned' => TRUE , 'not null' => TRUE, 'default' => 0 , ) ,		
+			'clientname' => array('type' => 'varchar'  ,'length' => 40, 'not null' => TRUE, 'default' => '', ) ,
+			'rid' =>  array('type' => 'int'  ,'length' => 10, 'not null' => TRUE, 'default' => 0, ) ,	
+			'status' => array('type' => 'int' , 'unsigned' => TRUE , 'not null' => TRUE, 'default' => 0 , ) ,	
+			'debt_quantity' => array('type' => 'float'  ,'length' => 10, 'not null' => TRUE, 'default' => 0.0, ) ,	
+		), 
+		'primary key' => array('id'),
+	
+	);
+		
+	$schema['joury_clients_debts_log'] = array(
+		'description' => 'this table control the salon services ',
+		'fields' => array(
+			'id' => array('type' => 'serial' , 'unsigned' => TRUE , 'not null' => TRUE,) , 
+			'client_id' => array('type' => 'int' , 'unsigned' => TRUE , 'not null' => TRUE, 'default' => 0 , ) ,		
+			'cashier_id' => array('type' => 'int' , 'unsigned' => TRUE , 'not null' => TRUE, 'default' => 0 , ) ,		
+			'register_id' =>  array('type' => 'int'  ,'length' => 10, 'not null' => TRUE, 'default' => 0, ) ,	
+			'date' => array('type' => 'varchar'  ,'length' => 40, 'not null' => TRUE, 'default' => '', ) ,
+			'debt_quantity' => array('type' => 'float'  ,'length' => 10, 'not null' => TRUE, 'default' => 0.0, ) ,	
+		), 
+		'primary key' => array('id'),
+	
+	);
+	
+	return $schema ; 
+}

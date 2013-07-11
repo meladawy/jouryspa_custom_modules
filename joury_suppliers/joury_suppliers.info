@@ -1,0 +1,5 @@
+; $Id$
+name = joury suppliers
+description = you can use this module to add new supplier and control existing suppliers
+core = 6.x
+package = joury spa

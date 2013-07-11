@@ -1,0 +1,5 @@
+;$Id$
+name = joury units
+description = control which units are available to deal with suppliers with
+core = 6.x
+package = joury spa

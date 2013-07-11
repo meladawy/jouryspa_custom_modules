@@ -1,0 +1,43 @@
+<?php
+// $Id$
+
+/**
+* Implementation of hook_install
+*/
+
+function joury_cancle_service_install(){
+	drupal_install_schema('joury_cancle_service') ; 
+}
+
+
+
+/**
+* Implementation of hook_uninstall
+*/
+
+function joury_cancle_service_uninstall(){
+	drupal_uninstall_schema('joury_cancle_service') ; 
+}
+
+
+/**
+* Implementation of hook_schema
+*/
+
+function joury_cancle_service_schema(){
+	$schema['joury_cancle_service'] = array(
+		'description' => 'this table contain clients data and information' , 
+		'fields' => array(
+			'id' => array('type' => 'serial' , 'unsigned' => TRUE, 'not null' => TRUE,) ,
+			'cid' => array('type' => 'int' , 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0, ) ,
+			'clientname' => array('type' => 'varchar', 'length' => 32 , 'default' => '',),
+			'servicename' => array('type' => 'varchar', 'length' => 32 , 'default' => '',),
+			'centername' => array('type' => 'varchar', 'length' => 32 , 'default' => '',),
+			'date' => array('type' => 'varchar', 'length' => 32 , 'default' => '',),
+			'removed_by' => array('type' => 'varchar', 'length' => 32 , 'default' => '',),
+		),
+		 'primary key' => array('id'),
+	); 
+	return $schema ; 
+
+}

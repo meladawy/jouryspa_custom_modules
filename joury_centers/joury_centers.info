@@ -1,0 +1,5 @@
+;$Id$
+name = joury centers
+description = control centers
+core = 6.x
+package = joury spa

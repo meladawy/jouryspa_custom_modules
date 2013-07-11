@@ -1,0 +1,186 @@
+#joury-store-stores{
+	width: 40% ;
+	margin-left: 30%; 	
+}	
+
+#joury-store-stores td{
+	text-align: center;
+	color: white;
+	font-weight: bolder;
+	background: #343434 ; 
+	border-bottom: 0px solid white;
+	border-radius: 20px;
+	cursor:pointer;
+
+}	
+#joury-store-products-table{
+	width: 800px;	
+	
+}
+#showroom-submit-product{
+background: white;
+border-radius: 10px;
+height: 100%;
+width: 80%;
+font-weight: bold;
+}
+#staff-submit-product{
+background: white;
+border-radius: 10px;
+height: 100%;
+width: 80%;
+font-weight: bold;
+}
+
+
+#joury-store-products-table tr{
+	border-width: 2px;
+	padding: 4px;
+	border-style: ridge;
+	border-color: gray;
+	
+	-moz-border-radius:10px ;
+	text-align: center;
+}
+#joury-store-products-head-column{
+	border-width: 4px;
+	padding: 4px;
+	border-style: ridge;
+	border-right-width: 0px;
+	border-color: gray;
+	-moz-border-radius: ;
+	text-align: center;
+	background:gray ; 
+	color: white;
+	font-weight: bolder;
+	text-transform:uppercase;
+	
+}
+
+#joury-store-products-head-row{
+	border-width: 4px;
+	padding: 4px;
+	border-style: ridge;
+	border-color: gray;
+
+	-moz-border-radius:10px ;
+	text-align: center;
+	
+	
+}
+	
+#joury-store-products-table td{
+		border-width: 2px;
+	padding: 2px;
+	border-style: dotted;
+	border-right-width: 0px;
+	border-color: black;
+	-moz-border-radius: ;
+	text-align: center;
+	
+}
+	
+
+#joury-store-stores td a{
+	text-align: center;
+	color: white;
+	font-weight: bolder;
+	text-transform: uppercase;
+}	
+
+#joury-store-stores td a:hover{
+	text-align: center;
+	color: white;
+	font-weight: bolder;
+	text-decoration: none;
+}
+select{
+background: white;
+height: 35px;
+width: 80%;
+text-align: center;
+border-radius: 10px;
+}
+option{
+background: white;
+height: 35px;
+width: 300px;
+text-align: center;
+}
+#store{
+
+}
+#joury-store-products-option-table{
+width: 90%;
+border-style: solid; 	
+}	
+#joury-store-products-option-table tr{
+border-style: solid; 	
+border-width: 5px;
+}	
+#joury-store-products-option-head-column{
+border-style: solid; 	
+}	
+.loading-d{
+background: url(waiting.gif) no-repeat;
+height: 100px;
+text-align: center;
+margin-left: 40%;
+}	
+#joury-store-requests-table{
+width: 100%;	
+}	
+#joury-store-requests-table td{
+text-align: center;
+}	
+#productname{
+background: white;
+height: 30px;
+width: 80%;
+text-align: center;
+border-radius: 10px;
+}	
+#make-request{
+background: white;
+height: 30px;
+text-align: center;
+border-radius: 10px;	
+}
+
+#joury-store-requests-search-result-table{
+width: 100% ; 	
+	font: 11px/24px Verdana, Arial, Helvetica, sans-serif;
+	border-collapse: collapse;
+}	
+#joury-store-requests-search-result-table td{
+border-bottom: 1px solid #CCC;
+padding: 0 0.5em;
+text-align: center;
+}	
+
+#joury-store-requests-search-result-table td+td {
+	border-left: 1px solid #CCC;
+	text-align: center;
+}
+
+#joury-store-requests-selected-result-table{
+	width: 100%;	
+}	
+#joury-store-requests-search-result-table tr{
+
+}	
+
+
+#alarm-showroom-table{
+width: 100%;	
+}	
+
+#alarm-showroom-table td{
+border-bottom: 1px solid #CCC;
+padding: 0 0.5em;
+text-align: center;
+}	
+#alarm-showroom-table td+td {
+	border-left: 1px solid #CCC;
+	text-align: center;
+}

@@ -1,0 +1,554 @@
+<?php
+// $Id$
+
+
+/**
+* Implementation of hook_menu
+*/
+
+function joury_store_menu(){
+
+	
+$items['ajax/store/products/%'] = array( // return the table that will appear when somebody click on export in suppliers
+		'title' => t('') , 
+		'description' => t('') , 
+		'access arguments' => array('access content') ,
+		'page callback' => '_store_products_page_ajax',   
+		'type' => MENU_CALLBACK, 
+	);	
+	
+$stores  = _get_stores() ; 	
+$items['joury/store-products'] = array( // return the table that will appear when somebody click on export in suppliers
+		'title' => t('store-products') , 
+		'description' => t('') , 
+		'access arguments' => array('menu- store products') ,
+		'page callback' => '_store_products_page' ,   
+		'page arguments' => array($stores) , 
+		'type' => MENU_NORMAL_ITEM , 
+	);	
+	
+$items['joury/store-products/table'] = array( 
+		'title' => t('') , 
+		'description' => t('') , 
+		'access arguments' => array('access content') ,
+		'page callback' => '_store_products_greentable_generator' ,   
+		'page arguments' => array($stores) , 
+		'type' => MENU_CALLBACK , 
+	);	
+$items['joury/store-products/requests/table-content/generator'] = array( 
+		'title' => t('') , 
+		'description' => t('') , 
+		'access arguments' => array('access content') ,
+		'page callback' => '_joury_store_products_requests_table_content_generator' ,   
+		'type' => MENU_CALLBACK , 
+	);			
+$items['joury/stores/products/alarm']	= array(
+		'title' => t('STORES PRODUCTS ALARM') , 
+		'description' => t('') , 
+		'access arguments' => array('report- store alarm') ,
+		'page callback' => '_joury_stores_products_alarm' ,   
+		'type' => MENU_NORMAL_ITEM , 
+);		
+
+$items['store/name/autocomplete'] = array(
+	'page callback' => 'store_name_autocomplete' ,
+	'access arguments' => array('access content'), 
+	'type' => MENU_CALLBACK,
+);
+	
+	return $items ; 	
+	
+}	
+
+/**
+* implmentatin of hook_perm
+*/
+function joury_store_perm(){
+	return array("menu- store products", "report- store alarm") ; 
+}
+
+/**
+* private function that generate green table in  joury/store-product
+*/
+
+function _store_products_greentable_generator() {
+	if(empty($_POST['selected-option'])){
+		echo "please select option from the right menu.."  ; 		
+	}else{
+		$selectedoption = _sqlInject($_POST['selected-option']) ;
+		$productid = _sqlInject($_POST['product-id']) ;
+		$storeid = _sqlInject($_POST['store-id']) ;
+		$price = _get_store_product_price($storeid,$productid) ; 
+		$product_quantity = _get_store_product_quantity($storeid,$productid) ; 
+		$timestamp = time() ; 
+		$date = date("m/d/Y h:i a", $timestamp);
+		if($selectedoption == 'staff'){
+		echo "<center><table id='joury-store-products-option-table' >" ; 
+			echo "<tr id='joury-store-products-option-head-row'>" ; 
+				echo "<td id='joury-store-products-option-head-column' ><strong>STAFF NAME</strong></td>" ; 
+				echo "<td id='joury-store-products-option-head-column' ><strong>QUANTITY</strong></td>" ; 
+				echo "<td id='joury-store-products-option-head-column' ><strong>DATE</strong></td>" ; 
+				echo "<td id='joury-store-products-option-head-column' ><strong>OPTION</strong></td>" ; 
+			echo "</tr>" ; 
+			echo "<tr id='joury-store-products-option-head-row'>" ; 
+				echo "<td id='joury-store-products-option-head-column' >";
+				_print_select_input_type('staff','joury_staff','firstname','sid','select-staff') ; 
+				echo "</td>" ; 
+				echo "<div style='display:none'><input type='hidden' id='price' value='".$price."' /></div>" ; 		
+				echo "<div style='display:none'><input type='hidden' id='productid' value='".$productid."' /></div>" ; 	
+				echo "<div style='display:none'><input type='hidden' id='storeid' value='".$storeid."' /></div>" ; 		 
+				echo "<div style='display:none'><input type='hidden' id='productquantity' value='".$product_quantity."' /></div>" ; 						
+				echo "<td id='joury-store-products-option-head-column' >".'<input type="text" id="quantity" name="quantity" value="1" size="5" />'."</td>" ; 
+				echo "<td id='joury-store-products-option-head-column' ><input type='text' id='staffdate' name='date' value='{$date}'  disabled=' '  /></td>" ; 
+				echo "<td id='joury-store-products-option-head-column' ><input type='submit' id='staff-submit-product' name='staff-submit-product' value='CASH'   /></td>" ; 
+			echo "</tr>" ; 		
+		echo "<table></center>"	;		
+		}
+		if($selectedoption == 'showroom'){
+		echo "<center><table id='joury-store-products-option-table' >" ; 
+			echo "<tr id='joury-store-products-option-head-row'>" ; 
+				echo "<td id='joury-store-products-option-head-column' ><strong>SHOWROOM NAME</strong></td>" ; 
+				echo "<td id='joury-store-products-option-head-column' ><strong>QUANTITY</strong></td>" ; 
+				echo "<td id='joury-store-products-option-head-column' ><strong>DATE</strong></td>" ; 
+				echo "<td id='joury-store-products-option-head-column' ><strong>OPTION</strong></td>" ; 
+			echo "</tr>" ; 
+			echo "<tr id='joury-store-products-option-head-row'>" ; 
+				echo "<td id='joury-store-products-option-head-column' >";
+				_print_select_input_type('showroom','joury_showrooms','name','sid','select-showroom') ; 
+				echo "</td>" ; 
+				echo "<td id='joury-store-products-option-head-column' >".'<input type="text" id="quantity" name="quantity" value="1" size="5" />'."</td>" ; 
+				echo "<td id='joury-store-products-option-head-column' ><input type='text' id='showroomdate' name='date' value='{$date}'  disabled='' /></td>" ; 
+				echo "<div style='display:none'><input type='hidden' id='price' value='".$price."' /></div>" ; 	
+				echo "<div style='display:none'><input type='hidden' id='productid' value='".$productid."' /></div>" ; 	
+				echo "<div style='display:none'><input type='hidden' id='storeid' value='".$storeid."' /></div>" ; 
+				echo "<div style='display:none'><input type='hidden' id='productquantity' value='".$product_quantity."' /></div>" ; 				
+				echo "<td id='joury-store-products-option-head-column' ><input type='submit' id='showroom-submit-product' name='showroom-submit-product' value='CASH'   /></td>" ; 
+			echo "</tr>" ; 		
+		echo "<table></center>"	;		
+			
+		}
+	}			
+}
+
+
+/**
+* Private function that return the content of store products page
+*/
+function _store_products_page($stores){
+	return theme('store_products',$stores)	 ; 
+}	
+
+
+
+/**
+* private function to get the products of current store in a table view
+*/
+function _store_products_page_ajax(){
+	$storeid = arg(3)  ;
+	$storeid = _sqlInject($storeid) ; 
+	$products = _get_store_products($storeid) ; 
+	$number_of_products = count($products) ; 
+
+	global $user ; 
+	$timestamp = time(); 
+	$date = date("m/d/Y h:m A" , $timestamp) ;
+	// make requests
+	echo "<form method='post' action=''  >" ;  
+	echo "<input type='hidden' name='author' id='author' value='".$user->name."' />" ;  
+	echo "<input type='hidden' name='storeid' id='storeid' value='{$storeid}' />" ;  
+	echo "<input type='hidden' name='date' id='date' value='{$date}' />" ;  
+	echo "<table id='joury-store-requests-selected-result-table' > " ;  // when someone select product to request
+		
+	echo "</table>" ; 
+	
+	echo "<table id='joury-store-requests-table' > " ; 
+	echo "<tr>" ; 
+
+		echo "<td>" ; 
+		echo "<strong>ENTER THE REQUESTED PRODUCT NAME:</strong><br/>" ; 
+		echo "</td>" ; 
+		echo "<td>" ;
+				echo "<input type='text' id='productname' name='searchproductname' /> " ;
+		echo "</td>" ; 
+		
+		echo "<td>" ; 
+		echo "<input type='submit' name='make-request' id='make-request' value='MAKE REQUEST'  disabled='' /> " ;
+		echo "</td>" ; 
+	echo "</tr>" ; 
+	
+	
+	
+	echo "</table>" ; 
+	echo "</form>" ; 
+
+	echo "<table id='joury-store-requests-search-result-table' > " ; // result when someone search for product
+		
+	echo "</table>" ; 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	if($number_of_products == 0 ){
+		echo "NO PRODUCTS IN THIS STORE" ; 
+		return ;	
+	}
+	echo "<table id='joury-store-products-table' >" ; 
+		echo "<tr id='joury-store-products-head-row'>" ; 
+			echo "<td id='joury-store-products-head-column' >PRODUCT ID</td>" ;
+			echo "<td id='joury-store-products-head-column' >PRODUCT NAME</td>" ; 
+			echo "<td id='joury-store-products-head-column' >QUANTITY</td>" ; 
+			//echo "<td id='joury-store-products-head-column' >ITEM PRICE</td>" ; 
+			echo "<td id='joury-store-products-head-column' >OPTIONS</td>" ; 
+		echo "</tr>" ; 
+		for($k=0 ; $k < $number_of_products ; $k++){
+		echo "<tr value='".$storeid."'>" ; 
+			echo "<td>".$products[$k]->productid."</td>" ;
+			echo "<td>".$products[$k]->productname."</td>" ; 
+			echo "<td id='".$products[$k]->productid."-column-quantity'>".$products[$k]->quantity."</td>" ; 
+		//	echo "<td>".$products[$k]->price."</td>" ;
+			echo "<td>";
+			echo "<select id='joury-store-menu' >" ; 
+			echo "<option value='0' selected> select-option </option>" ; 
+			echo "<option value='staff'> Cash to staff </option>" ; 
+			echo "<option value='showroom'> Cash to showroom </option>" ; 
+			echo "</select>" ; 
+			echo "</td>" ; 
+		echo "</tr>" ; 
+			}
+	echo "</table>" ; 	 	
+			
+	
+}	
+
+/**
+* Implementation of hook_theme
+*/
+
+function joury_store_theme(){
+	return array(
+		'store_products' => array(
+				'template' => 'store_products' , 
+				'arguments' => array('stores' => '' ) , 
+		),	
+	) ; 
+}	
+	
+
+
+
+
+
+
+/**
+* generate products when someone in the showroom search for product to make request
+*/
+function _joury_store_products_requests_table_content_generator(){
+	if($_POST['keyword']){
+		global $user ; 
+		$products = _get_products_by_keyword($_POST['keyword']) ; 	
+		$number_of_products = count($products) ; 
+		if($number_of_products  == 0){ // no products with this name
+			echo "<tr class='message error' >" ;  
+				echo "<td colspan='5' >" ; 
+					echo "<center>NO PRODUCT WITH THIS NAME</center>" ; 
+				echo "</td>" ; 
+			echo "</tr>" ; 
+			return  0 ; 	
+		}
+		echo "<tr id='joury-store-products-head-column' >" ; 
+			echo "<td>" ; 
+				echo "PRODUCT NAME" ;
+			echo "</td>" ; 
+			
+			echo "<td id='joury-store-products-head-column'  >" ; 
+				echo "QUANTITY" ;
+			echo "</td>" ; 
+			
+			echo "<td id='joury-store-products-head-column'  >" ; 
+				echo "SELECT" ;
+			echo "</td>" ; 
+		echo "</tr>" ; 
+		$variable = rand(1,32425242524);
+		for($k=0 ; $k<$number_of_products ; $k++){ // there is products	
+			echo "<tr>" ; 
+				echo "<td>" ; 
+					echo $products[$k]->name ; 
+				echo "</td>" ;
+				
+				echo "<td>" ; 
+					echo "<input type='text' name='quantity-".$k.$variable."' id='quantity' disabled='' value='1' />" ; 
+				echo "</td>" ;  
+				
+				echo "<td>" ; 
+					echo "<input type='checkbox' name='select-".$k.$variable."' id='select' />" ; 
+				echo "</td>" ; 
+				
+				echo "<td id='hidden-column'  style='display:none;' />";
+					echo "<input type='hidden' name='productname-".$k.$variable."' id='productname' value='".$products[$k]->name."' />" ;
+					echo "<input type='hidden' name='productid-".$k.$variable."' id='productid' value='".$products[$k]->pid."' />" ;
+				echo "</td>" ; 
+			echo "</tr>" ; 
+		}		
+		
+	}	
+}	
+
+
+
+
+
+/**
+* private function that check if this product exist in this place before or not
+*/
+function _check_product_in_store($product,$store){
+	$result_handle = db_query("select count(*) from `joury_store` where `productid` = %d and `storeid` = %d " ,$product , $store ) ; 
+	$result = db_fetch_array($result_handle) ; 
+	if($result['count(*)'] == 1 ){
+		return  1 ; 
+	}else{
+		return 0 ; 	
+	}		
+}	
+
+
+/**
+* private function to get the store name
+*/
+
+function _get_store_name($storeid){
+	$result_handle = db_query("select name from `joury_stores` where `sid` = %d " , $storeid ) ; 
+	$result_obj = db_fetch_object($result_handle) ; 
+	$result = $result_obj->name;  
+	if(!empty($result)){
+		return  $result ; 
+	}else{
+		return '' ; 	
+	}	
+}	
+
+
+/**
+* private function to get the product name
+*/
+
+function _get_product_name($productid){
+	$result_handle = db_query("select name from `joury_products` where `pid` = %d " , $productid ) ; 
+	$result_obj = db_fetch_object($result_handle) ; 
+	$result = $result_obj->name;  
+	if(!empty($result)){
+		return  $result ; 
+	}else{
+		return '' ; 	
+	}	
+}	
+
+
+
+
+/**
+* private function to get stores 
+*/
+
+function _get_stores(){
+	$result_handle = db_query("select * from `joury_stores` ") ;  
+	while($result_obj = db_fetch_object($result_handle)){
+		$stores[] = 	$result_obj  ; 
+	}	 
+	return $stores ;  
+}	
+
+
+/**
+* private function to get current store id products
+*/
+
+function _get_store_products($storeid){
+	$result_handle = db_query("select * from `joury_store` where `storeid` = %d " ,$storeid)  ;  
+	while($result_obj = db_fetch_object($result_handle)){
+		$storeproducts[] = 	$result_obj  ; 
+	}	 
+	return $storeproducts ;  
+}	
+
+/**
+* private function to get current store id products
+*/
+
+function _get_product_from_store($storeid,$productid){
+	$result_handle = db_query("select * from {joury_store} where `storeid` = %d and `productid` = %d" ,$storeid,$productid)  ;  
+	$result_obj = db_fetch_object($result_handle) ; 
+	return $result_obj ;  
+}	
+
+
+/**
+* private function to get current product price
+*/
+
+function _get_store_product_price($storeid , $productid){
+	$result_handle = db_query("select price from `joury_store` where `storeid` = %d and `productid` = %d" ,$storeid, $productid)  ;  
+	$result_obj = db_fetch_object($result_handle) ; 
+	return $result_obj->price ;  
+}	
+
+
+
+/**
+* private function to get current product quantity
+*/
+
+function _get_store_product_quantity($storeid , $productid){
+	$result_handle = db_query("select quantity from `joury_store` where `storeid` = %d and `productid` = %d" ,$storeid, $productid)  ;  
+	$result_obj = db_fetch_object($result_handle) ; 
+	return $result_obj->quantity ;  
+}	
+
+
+
+
+/**
+* Private function for alarm page
+*/
+
+function _joury_stores_products_alarm(){
+	$url = drupal_get_path('module' ,'joury_store') ; 
+	
+	$front = url('', array('absolute' => TRUE)) ; 
+	$combox_box_module_path = drupal_get_path('module' , 'joury_register_service') ; 
+	drupal_add_js($combox_box_module_path."/codebase/dhtmlxcommon.js") ; 
+	drupal_add_js($combox_box_module_path."/codebase/dhtmlxcombo.js") ; 
+	drupal_add_css($combox_box_module_path."/codebase/dhtmlxcombo.css") ; 
+
+	drupal_add_css($url."/joury_store.css") ;
+	drupal_add_js($url."/alarmpage.js") ; 
+	drupal_add_js( array('frontpage' => $front) , 'setting') ; 
+	
+	if(!empty($_COOKIE['alarmproducts'])){
+		$result = $_COOKIE['alarmproducts'] ;
+		$result =  json_decode($result , $assoc = null);
+		$number_of_results = count($result);
+
+			$content = "<table id='alarm-store-table' >" ; 	
+			$content .= "<tr><td id='joury-store-products-head-column' > PRODUCT NAME </td> <td id='joury-store-products-head-column' >QUANTITY</td></tr>" ; 
+			for($k=0 ; $k<$number_of_results  ; $k++){	
+			$content .=  "<tr><td>".$result[$k]->productname."</td><td>".$result[$k]->quantity."</td></tr>" ;
+			}
+			$content .= "</table>" ; 
+			
+		setcookie('alarmproducts',NULL, time()+(-234252425));	
+	}else{
+		$content = " " ; 
+	}	
+	return $content.drupal_get_form("joury_stores_products_alarm_form") ;  
+}	
+
+
+
+
+/**
+* form for alarm page
+*/
+
+function joury_stores_products_alarm_form($form_state){
+	for ($k = 1 ;  $k <= 100 ; $k++){
+		$deadquantity[$k] = $k ; 
+	}	
+	
+	// stores select array
+	$stores[''] = '' ; 
+	$result_handle = db_query("select `name` from {joury_stores}") ;
+	while($result_obj = db_fetch_object($result_handle)) {
+		$stores[$result_obj->name]	 = check_plain($result_obj->name) ; 
+	}
+		
+	
+	$form['container']  =  array(
+		'#type' => 'fieldset',
+		'#collapsible' => TRUE , 
+		'#attributes' => array('style'=>'margin-bottom:500px;') ,
+		'#title' => t("STORE"),
+	); 	
+		
+	$form['container']['store']  =  array(
+		'#title' => t("STORE NAME"),
+		'#type' => 'select', 
+	//	'#autocomplete_path' => 'store/name/autocomplete',
+	//	'#size' => 30 , 
+		'#options' => $stores , 
+	); 
+	$form['container']['quantity']  =  array(
+		'#title' => t("DEAD QUANTITY"),
+		'#type' => 'select', 
+		'#options' => $deadquantity,
+		'#default_value' => 10 , 
+	); 
+	$form['container']['submit'] = array(
+			'#type' => 'submit' , 
+			'#value' => t('GET') , 
+			'#attributes' => array('style'=>'position:relative; left:10px; bottom: 4px;') ,
+	);		
+	
+	return $form ; 
+}	
+
+/**
+* alarm page form validate
+*/
+function joury_stores_products_alarm_form_validate($form,$formstate){
+	if(empty($form['#post']['store'])){
+		form_set_error('store' , 'please select store name') ; 	
+	}		
+}	
+
+/**
+* alarm page form submit
+*/
+function joury_stores_products_alarm_form_submit($form,$form_state){
+		if(!empty($form['#post']['store']) && !empty($form['#post']['quantity'])){
+			$keyword = $form['#post']['store'] ; 
+			$number = $form['#post']['quantity'] ;
+			$result_handle = db_query("select * from {joury_store} where `storename` = '%s'  and `quantity` <= %d " ,$keyword,$number) ; 
+			while($result_obj = db_fetch_object($result_handle)){
+					$result[] = $result_obj ; 
+			}			
+			$number_of_results = count($result) ; 
+			if($number_of_results == 0){
+				drupal_set_message("<div class='message warning' ><center>NO PRODUCTS UNDER THIS QUANTITY IN THIS STORE</center></div>") ; 
+				return ; 	
+			}
+			
+			
+			setcookie('alarmproducts', json_encode($result) , time()+(60));
+		}	
+}	
+
+
+/**
+* generate autocomplete field for showroom
+*/
+
+function store_name_autocomplete($keyword){
+	$result_handle = db_query("select `name` from {joury_stores} where `name` like '%%%s%%'", $keyword) ;
+	while($result_obj = db_fetch_object($result_handle)) {
+		$result[$result_obj->name]	 = check_plain($result_obj->name) ; 
+	}
+	
+	echo drupal_to_js($result) ; 
+	exit() ; 
+}
+

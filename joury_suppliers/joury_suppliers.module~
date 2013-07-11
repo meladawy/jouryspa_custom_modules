@@ -1,0 +1,575 @@
+<?php
+// $Id$
+
+
+/**
+* Implementation of hook_nodeapi
+*/
+
+function joury_suppliers_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL){
+	switch($op){
+			case 'insert' :
+			if($node->type == 'suppliers'){
+				$name = $node->title ; 
+				$nid = $node->nid ;
+				$description = $node->body ; 
+	
+				db_query("insert into {joury_suppliers} (`nid` , `name` , `description`)  values (%d , '%s' , '%s')" , $nid, $name, $description); 
+			}			
+			break; 		
+			
+			case 'update' :
+			if($node->type == 'suppliers'){
+				$name = $node->title ; 
+				$nid = $node->nid ;
+				$description = $node->body ;  
+				db_query("update  {joury_suppliers} set `name` = '%s', `description` = '%s'  where `nid` = %d ", $name,$description , $nid); 
+			}	
+			break;
+			
+			case 'delete' :
+			if($node->type == 'suppliers'){
+				$name = $node->title ; 
+				$nid = $node->nid ; 
+				db_query("delete from  {joury_suppliers} where `nid` = %d " , $nid); 
+			}		
+			break;
+			
+			case 'view' :
+				
+			break ; 		
+		
+		}	
+}
+
+
+/**
+* Implementation of hook_menu
+*/
+function joury_suppliers_menu(){
+	$items['suppliers/export/table'] = array( // return the table that will appear when somebody click on export in suppliers
+		'title' => t('') , 
+		'description' => t('') , 
+		'access arguments' => array('access content') ,
+		'page callback' => '_suppliers_export_table',   
+		'type' => MENU_CALLBACK, 
+	
+	
+	);
+	$items['joury/suppliers'] = array(
+		'title' => t('SUPPLIERS') , 
+		'description' => t('') , 
+		'access arguments' => array('menu- request from supplier') ,
+		'page callback' => '_page_joury_suppliers',   
+		'type' => MENU_NORMAL_ITEM, 
+		
+	);
+	$items['suppliers/name/generator'] = array(
+		'title' => t('') , 
+		'description' => t('') , 
+		'access arguments' => array('access content') ,
+		'page callback' => '_suppliers_name_generator',   
+		'type' => MENU_CALLBACK, 
+		
+	);
+		
+	$items['suppliers/export/process'] = array( // return the table that will appear when somebody click on export in suppliers
+		'title' => t('') , 
+		'description' => t('') , 
+		'access arguments' => array('access content') ,
+		'page callback' => '_store_export_process',   
+		'type' => MENU_CALLBACK, 
+	);
+	
+	return $items ; 	
+	
+	
+}	
+
+/**
+/* hook_perm
+*/
+function joury_suppliers_perm() {
+	return array("menu- request from supplier") ; 	
+}	
+
+/**
+* IMplementation of hook_theme
+*/
+
+function joury_suppliers_theme(){
+	return array(
+		'theme_page_joury_suppliers' => array(
+				'template' => 'page_joury_suppliers' , 
+				'arguments' => array('') ,	
+			),
+	);	
+	
+}	
+
+
+/**
+* Private function that produce the html of suppliers export
+*/
+
+function _suppliers_export_table(){
+	if(!empty($_POST["suppliername"]) && !empty($_POST['productkeyword'])) {
+	$keyword = $_POST['productkeyword'] ; 	
+	$modulepath = drupal_get_path('module' , 'joury_suppliers') ; 
+	$suppliername = $_POST["suppliername"] ; 
+	$supplierid = _get_supplier_id_from_name($suppliername) ; 
+	drupal_add_css($modulepath."/joury_suppliers.css") ; 	
+	
+
+	if($keyword == 'all') {
+		$products = _get_products_of_supplierid($supplierid) ; 
+	}else{
+		$products = _get_products_of_supplierid_keyword($supplierid,$keyword) ; 
+	}	
+	$number_of_products =  count($products) ; 
+	$url = url('suppliers/export/process' , array('absolute' => TRUE)) ; 
+	$timestamp = time() ; 
+	$date = date("m/d/Y h:i:s A") ; 
+	echo "<form method='POST' action='{$url}' >" ; 
+	echo "<input type='hidden' name='date' value='{$date}' />" ;							
+	echo "<center>" ; 	
+	echo "<table id='suppliers-export-table' >" ; 
+
+		
+			echo "<tr id='suppliers-table-head-row' >" ; 
+		
+			echo "<td id='supplier-table-head'>" ;
+				echo "<strong>PRODUCT NAME</strong>" ; 
+			echo "</td>" ;  
+			
+
+			echo "<td id='supplier-table-head' >" ;
+				echo "<strong>QUANTITY</strong>" ; 
+			echo "</td>" ;
+			  
+			echo "<td id='supplier-table-head' >" ;
+				echo "<strong>ITEM PRICE BEFORE DISCOUNT</strong>" ; 
+			echo "</td>" ;
+			
+			echo "<td id='supplier-table-head' >" ;
+				echo "<strong>DISCOUNT</strong>" ; 
+			echo "</td>" ;						  
+			 
+			echo "<td id='supplier-table-head' >" ;
+				echo "<strong>SELECT</strong>" ; 
+			echo "</td>" ;  
+			
+		echo "</tr>" ; 
+
+	for($k=0 ; $k< $number_of_products ;  $k++){	
+		$keynumber = rand(1 ,999999999999);	
+		
+		echo "<tr>" ; 
+			
+			echo "<td>" ;
+				echo $products[$k]->name ; 
+			echo "</td>" ;  
+
+			echo "<td>" ;
+				echo "<input type='text' name='quantity-".$k.$keynumber."' id='quantity' />" ; 
+			echo "</td>" ; 
+			
+			echo "<td>" ;
+				echo "<input type='text' name='itempricebd-".$k.$keynumber."' id='itempricebd' />" ; 
+			echo "</td>" ; 
+			
+			echo "<td>" ;
+				echo "<input type='text' name='discountp-".$k.$keynumber."' id='discountp' />" ; 
+			echo "</td>" ; 			
+			
+			echo "<td>" ;
+				echo "<input type='checkbox' id='select' name='select-".$k.$keynumber."' /> " ; 
+			echo "</td>" ;  
+			
+
+	
+			
+			echo "<td style='display:none;' >" ;  // hidden column
+					 echo "<div style='display:none;' id='hidden-div-container' ><div id='divdetails-".$k.$keynumber."' '>";
+			 				   echo "<input type='hidden' name='supplierid-".$k.$keynumber."' value='{$supplierid}' />" ;
+			 				   echo "<input type='hidden' name='productid-".$k.$keynumber."' value='".$products[$k]->pid."' />" ;
+			 				   echo "<input type='hidden' name='keynumber' id='keynumber' value='".$k.$keynumber."' />" ; 
+					 echo "</div></div>" ; 
+			echo "</td>" ; 		 
+
+
+			
+			echo "</tr>" ;						
+		
+
+			
+		 	
+		}
+		if($number_of_products == 0){
+			echo "<tr>" ;
+				echo "<td colspan='3'>" ;
+					echo "NO PRODUCTS" ; 
+				echo "</td>" ;
+			echo "</tr>" ; 
+		}	
+			
+		echo "</table>" ;
+		echo "</center>" ;
+		echo "</form>" ; 
+	}	
+
+}
+
+
+/**
+* private function to make the process of exporting new product from supplier
+*/
+
+function _store_export_process(){
+
+if(!empty($_POST['suppliers-submit']) && !empty($_POST['unit']) ){
+	//$storeid = $_POST['storeid'] ; 
+	$items  =   $_POST['unit'] ; 
+	$date = $_POST['date'] ;
+	global $user ; 
+	$author = $user->name ;  
+	$supplierurl = url('joury/suppliers' ,array('absolute' => TRUE))  ;
+		foreach($_POST as $key => $val){
+		if($val == 'on'){
+			$id = substr($key,7,30) ; 
+			$productid_arr[] = $_POST['productid-'.$id] ; //array of products
+			$quantity_arr[] = $_POST['quantity-'.$id] ;  // array of quantities
+		// $itempricead_arr[] = $_POST['itempricead-'.$pid] ;  // array of item price after discount
+			$itempricebd_arr[] = $_POST['itempricebd-'.$id] ;  // array of item price before discount
+			$discountp_arr[] = $_POST['discountp-'.$id] ;  // array of discount percentage 
+		//	$discounta_arr[] = $_POST['discounta-'.$pid] ;  // array of discount amount
+		//	$nettotalad_arr[] = $_POST['nettotalad-'.$pid] ;  // array of net total after discount
+		//	$nettotalbd_arr[] = $_POST['nettotalbd-'.$pid] ;  // array of net total before discount
+			$supplierid_arr[] = $_POST['supplierid-'.$id] ;  // array of suppliers
+			$suppliername_arr[] = _get_name_of_supplierid($_POST['supplierid-'.$id]) ; 
+		}			
+		}	
+		
+		
+
+	$number_of_products = count($productid_arr) ;
+
+		for ($k=0 ; $k< $number_of_products ; $k++){
+			$productid = $productid_arr[$k] ; 
+			$productname = _get_product_name($productid); 
+			$itemsquantity = $items * $quantity_arr[$k] ;
+			$discountp = $discountp_arr[$k] ;
+			$itempricebd = $itempricebd_arr[$k] ;  
+			$itempricead =  $itempricebd - ( ($itempricebd/100) * $discountp) ;  
+			$discounta = ($itempricebd - $itempricead) ;  
+			$nettotalbd = ($itemsquantity * $itempricebd) ; 
+			$nettotalad = ($itemsquantity * $itempricead) ;  		
+			$supplierid = $supplierid_arr[$k] ; 
+			$suppliername = $suppliername_arr[$k] ; 
+		
+			//if($itemsquantity > 0 &&  $nettotalad>0){
+		
+				db_query("insert into `joury_requests_from_suppliers` (`productid`,`productname`,`supplierid`,`suppliername`,`quantity`
+				,`itempricead`,`itempricebd`,`discountp`,`discounta`,`nettotalad`,`nettotalbd`,`date`,`author`) values 
+				(%d,'%s',%d,'%s',%d,%f,%f,%f,%f,%f,%f,'%s','%s')"
+				,$productid,$productname,$supplierid,$suppliername,$itemsquantity,$itempricead,$itempricebd,$discountp,$discounta,
+				 $nettotalad,$nettotalbd,$date,$author) ; 			
+			  drupal_set_message("<div class='message ok'> <center> request completed...</center> </div>") ;	
+			
+		}	
+		
+		drupal_goto($supplierurl) ; 
+	}
+
+
+
+
+
+
+}	
+
+
+/**
+*
+*/
+function _get_supplier_id_from_name($name){
+	$result_handle =  db_query("select `sid` from {joury_suppliers} where `name` like '%%%s%%' ",$name) ;
+	$result_obj = db_fetch_object($result_handle) ;  
+	return $result_obj->sid ; 
+}	
+
+
+/**
+* Implementation of hook_jourymenu
+*/
+function joury_suppliers_jourymenu(){
+	$options  = '<input  type="submit" name="export" value="SEARCH" type="submit" id="joury-suppliers-button-export" />'; 
+	$modulepath = drupal_get_path('module' , 'joury_suppliers') ; 
+	$jslink = $modulepath."/joury_suppliers.js" ;  
+	return array(
+	'suppliers-view', //
+	'joury_suppliers', 
+	array('sid' => 'supplier id ','name' => 'name'),  // help to getting the page content
+	array() ,  // if you need search in this page
+	'' , // the full link of the js file for this page
+	'' , //option in the table that will be viewed...its usually html
+	); 	
+}
+
+
+/**
+* Private function to view joury/suppliers page 
+*/
+
+function _page_joury_suppliers(){ // joury supplier page 
+	return theme ('theme_page_joury_suppliers') ; 
+}	
+
+
+
+
+
+/**
+* Private function that print select input type of table name
+*/
+
+function _print_select_input_type($selectname,$tablename,$fieldtosee, $valuefield, $firstlabel){
+	$result_handle = db_query("select *  from `{$tablename}` ") ; 
+	echo "<select name='{$selectname}' id='{$selectname}' >"	 ;
+	echo "<option value=''>" ; 
+			echo $firstlabel ; 
+		echo "</option>" ;
+	while($result = db_fetch_object($result_handle)) {
+		echo "<option value='".$result->$valuefield."'>" ; 
+			echo $result->$fieldtosee ; 
+		echo "</option>" ;
+	}		
+	echo "</select>" ;
+}	
+
+
+
+/**
+* Private function that print select input type of table name
+*/
+
+function _print_select_input_type_products($selectname,$tablename,$fieldtosee, $valuefield, $firstlabel , $supplierid){
+	$suppliernid_handle  = db_query("select `nid` from `joury_suppliers` where `sid` = %d" , $supplierid ) ; 
+	$suppliernid_object = db_fetch_object($suppliernid_handle) ; 
+	$suppliernid = $suppliernid_object->nid ; 
+ 	$result_handle = db_query("select *  from `{$tablename}` where `suppliers` like '%, {$suppliernid} ,%' ") ; 
+	echo "<select name='{$selectname}' id='{$selectname}' >"	 ;
+	echo "<option value=''>" ; 
+			echo $firstlabel ; 
+		echo "</option>" ;
+	while($result = db_fetch_object($result_handle)) {
+		echo "<option value='".$result->$valuefield."'>" ; 
+			echo $result->$fieldtosee ; 
+		echo "</option>" ;
+	}		
+	echo "</select>" ;
+}	
+
+
+/**
+* Private function that print select input type of table name
+*/
+
+function _print_select_input_type_units($selectname,$tablename,$fieldtosee, $valuefield, $firstlabel ){
+ 	$result_handle = db_query("select *  from `{$tablename}` order by items asc") ; 
+	echo "<select name='{$selectname}' id='{$selectname}' >"	 ;
+	while($result = db_fetch_object($result_handle)) {
+		echo "<option value='".$result->$valuefield."'>" ; 
+			echo $result->$fieldtosee ; 
+		echo "</option>" ;
+	}		
+	echo "</select>" ;
+}	
+
+
+/**
+* Private function to get the products of supplier id
+*/
+function _get_products_of_supplierid($supplierid) {
+$suppliernid = _get_nid_of_supplierid($supplierid) ; 	
+$suppliernidformat = ", ".$suppliernid." ," ; 
+$result_handle = db_query("select * from `joury_products` where `suppliers` like '%%%s%%'" , $suppliernidformat) ; 
+while($result = db_fetch_object($result_handle)){	
+$products[] = $result ; 	
+}	
+return $products ; 
+}	
+
+/**
+* Private function to get the products of supplier id
+*/
+function _get_products_of_supplierid_keyword($supplierid , $keyword) {
+$suppliernid = _get_nid_of_supplierid($supplierid) ; 	
+$suppliernidformat = ", ".$suppliernid." ," ; 
+if(!empty($keyword) && $keyword != '*'){
+$result_handle = db_query("select * from `joury_products` where `suppliers` like '%%%s%%' and `name` like '%s%%'" , $suppliernidformat,$keyword) ; 
+}else{
+$result_handle = db_query("select * from `joury_products` where `suppliers` like '%%%s%%' " , $suppliernidformat) ; 	
+}	
+while($result = db_fetch_object($result_handle)){	
+$products[] = $result ; 	
+}	
+return $products ; 
+}	
+
+
+/**
+* get the nid of supplier
+*/
+
+function _get_nid_of_supplierid($supplierid) {
+$result_handle = db_query("select nid from `joury_suppliers` where `sid` = %d " , $supplierid) ; 	
+$result_obj = db_fetch_object($result_handle) ; 
+$result  = $result_obj->nid; 
+return $result ;
+}	
+
+
+/**
+* get name of supplierid
+*/
+
+function _get_name_of_supplierid($supplierid) {
+$result_handle = db_query("select name from `joury_suppliers` where `sid` = %d " , $supplierid) ; 	
+$result_obj = db_fetch_object($result_handle) ; 
+$result  = $result_obj->name; 
+return $result ;
+}	
+
+
+
+function _get_supplier_form($form_state) {
+	
+	// generate suppliers array
+	$suppleirs[''] = '' ; 
+	$result_suppliers_handle = db_query("select * from {joury_suppliers}") ; 	
+	while ($result_obj = db_fetch_object($result_suppliers_handle ) ){ 
+ 	     $suppleirs[$result_obj->name] = check_plain($result_obj->name);
+	}	
+	
+	$form['selected'] = array(
+		'#title' => t("SELECTED"),
+		'#type' => 'fieldset' , 
+		'#attributes' => array("id" => "selected-fieldset") ,
+	);
+	$form['selected']['make-request'] = array(
+		'#value' => t('MAKE REQUEST') ,
+		'#type' => 'submit' , 
+		'#attributes' => array("id" => "submit-make-request") ,
+	);
+	
+	$form['request'] = array(
+		'#title' => t("REQUESTS"),
+		'#type' => 'fieldset' ,  // fieldset da fram kda beidom shwayit fields 7lween
+	);
+
+
+
+	$form['request']['supplier'] = array( // kda hayib2a el subject de 7aga gowa el fieldset elly e7na lissa 2ailenha foo2 madam 2 dimention array
+		'#type' => 'select' ,  // kda m3naaah ka2ino type="text"
+		'#title' =>  t('SUPPLIER-NAME'),
+	//	'#size' => 60 , 
+	//	'#maxlength' => 255 ,  // akber 3dd mn el 7roof momkin nsta3milo 
+		//'#autocomplete_path' => 'suppliers/name/generator',
+		'#options' => $suppleirs , 
+		'#description' => t('SUPPLIER NAME') , 
+	);
+
+
+
+	$form['request']['product'] = array(
+		'#type' => 'textfield' ,  
+		'#title' => t('PRODUCT NAME') , 
+	);
+	$form['result'] = array(
+		'#title' => t("RESULT"),
+		'#type' => 'fieldset' ,  // fieldset da fram kda beidom shwayit fields 7lween
+		'#attributes' => array("id" => "result-fieldset") ,
+	);
+
+ 
+	return $form ; 	
+}	
+
+
+
+
+function _get_supplier_form_submit($form,$form_state){	
+
+	$items  =   1 ; 
+	$date = $_POST['date'] ;
+	global $user ; 
+	$author = $user->name ;  
+	$supplierurl = url('joury/suppliers' ,array('absolute' => TRUE))  ;
+		foreach($form['#post'] as $key => $val){
+		if($val == 'on'){
+			$id = substr($key,7,30) ; 
+			$productid_arr[] = $_POST['productid-'.$id] ; //array of products
+			$quantity_arr[] = $_POST['quantity-'.$id] ;  // array of quantities
+			$itempricebd_arr[] = $_POST['itempricebd-'.$id] ;  // array of item price before discount
+			$discountp_arr[] = $_POST['discountp-'.$id] ;  // array of discount percentage 
+			$supplierid_arr[] = $_POST['supplierid-'.$id] ;  // array of suppliers
+			$suppliername_arr[] = _get_name_of_supplierid($_POST['supplierid-'.$id]) ; 
+		}			
+		}	
+		
+		
+
+	$number_of_products = count($productid_arr) ;
+
+		for ($k=0 ; $k< $number_of_products ; $k++){
+			$productid = $productid_arr[$k] ; 
+			$productname = _get_product_name($productid); 
+			$itemsquantity = $items * $quantity_arr[$k] ;
+			$discountp = $discountp_arr[$k] ;
+			$itempricebd = $itempricebd_arr[$k] ;  
+			$itempricead =  $itempricebd - ( ($itempricebd/100) * $discountp) ;  
+			$discounta = ($itempricebd - $itempricead) ;  
+			$nettotalbd = ($itemsquantity * $itempricebd) ; 
+			$nettotalad = ($itemsquantity * $itempricead) ;  		
+			$supplierid = $supplierid_arr[$k] ; 
+			$suppliername = $suppliername_arr[$k] ; 
+		
+			//if($itemsquantity > 0 &&  $nettotalad>0){
+		
+				db_query("insert into `joury_requests_from_suppliers` (`productid`,`productname`,`supplierid`,`suppliername`,`quantity`
+				,`itempricead`,`itempricebd`,`discountp`,`discounta`,`nettotalad`,`nettotalbd`,`date`,`author`) values 
+				(%d,'%s',%d,'%s',%d,%f,%f,%f,%f,%f,%f,'%s','%s')"
+				,$productid,$productname,$supplierid,$suppliername,$itemsquantity,$itempricead,$itempricebd,$discountp,$discounta,
+				 $nettotalad,$nettotalbd,$date,$author) ; 			
+			
+		}	
+		drupal_set_message("<div class='message ok'> <center> REQUEST COMPLETED SUCCESSFULLY</center> </div>") ;	
+		drupal_goto($supplierurl) ; 
+	
+}	
+
+
+
+
+/**
+*
+*/
+
+function _suppliers_name_generator($result = NULL){
+if(!empty($result) && $result != '*'){
+$result_suppliers_handle = db_query("select * from {joury_suppliers} where name like '%s%%'" ,$result ) ; 
+}else{
+$result_suppliers_handle = db_query("select * from {joury_suppliers}") ; 	
+}	
+while ($result_obj = db_fetch_object($result_suppliers_handle ) ){ 
+      $matches[$result_obj->name] = check_plain($result_obj->name);
+}
+
+  print drupal_to_js($matches)  ; 
+
+
+}	
+	
+
+

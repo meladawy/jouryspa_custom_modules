@@ -1,0 +1,780 @@
+<?php
+// $Id$
+
+
+
+
+
+
+
+
+
+
+
+/**
+* Implementation of hook_menu
+*/
+
+function joury_showroom_menu(){
+	
+	$items['ajax/showrooms/from-store/process'] = array( // de bt3mil el process lama showroom bia5od product mn el store
+		'title' => t('') , 
+		'description' => t('') , 
+		'access arguments' => array('access content') ,
+		'page callback' => '_showroom_fromstore_process',   
+		'type' => MENU_CALLBACK, 
+	);	
+	
+	$items['ajax/showrooms/from-showroom/process'] = array( // de bt3mil el process lama showroom bia5od product mn el store
+		'title' => t('') , 
+		'description' => t('') , 
+		'access arguments' => array('access content') ,
+		'page callback' => '_store_fromshowroom_process',   
+		'type' => MENU_CALLBACK, 
+	);		
+	
+$showrooms  = _get_showrooms() ; 	
+$items['joury/showroom-products'] = array( 
+		'title' => t('showroom-products') , 
+		'description' => t('') , 
+		'access arguments' => array('menu- showrooms products') ,
+		'page callback' => '_showroom_products_page' ,   
+		'page arguments' => array($showrooms) , 
+		'type' => MENU_NORMAL_ITEM , 
+	);	
+$items['ajax/showroom/products/%'] = array( // hai represent el products bta3it el showroom
+		'title' => t('') , 
+		'description' => t('') , 
+		'access arguments' => array('access content') ,
+		'page callback' => '_showroom_products_page_ajax',   
+		'type' => MENU_CALLBACK, 
+	);		
+$items['joury/showroom-products/table'] = array( 
+		'title' => t('') , 
+		'description' => t('') , 
+		'access arguments' => array('access content') ,
+		'page callback' => '_showroom_products_greentable_generator' ,   
+		'type' => MENU_CALLBACK , 
+	);	
+	
+$items['joury/showroom-products/requests/table-content/generator'] = array( 
+		'title' => t('') , 
+		'description' => t('') , 
+		'access arguments' => array('access content') ,
+		'page callback' => '_joury_showroom_products_requests_table_content_generator' ,   
+		'type' => MENU_CALLBACK , 
+	);				
+	
+$items['joury/showrooms/products/alarm']	= array(
+		'title' => t('SHOWROOMS PRODUCTS ALARM') , 
+		'description' => t('') , 
+		'access arguments' => array('report- showrooms alarm') ,
+		'page callback' => '_joury_showrooms_products_alarm' ,   
+		'type' => MENU_NORMAL_ITEM , 
+);
+
+$items['showroom/name/autocomplete'] = array(
+	'page callback' => 'showroom_name_autocomplete' ,
+	'access arguments' => array('access content'), 
+	'type' => MENU_CALLBACK,
+);
+
+	return $items ; 	
+	
+}	
+//
+
+
+
+
+/**
+* bn3mil process ama el showroom ye3mil return ll store
+*/
+
+function _store_fromshowroom_process(){
+		if(!empty($_POST['showroomid']) && !empty($_POST['productid']) &&!empty($_POST['price']) &&!empty($_POST['storeid']) && !empty($_POST['quantity']) ){
+		$showroomid = _sqlInject($_POST['showroomid']) ; 
+		$productid =  _sqlInject($_POST['productid']) ; 
+		$productname =  _get_product_name($productid) ; 
+		$price = _sqlInject($_POST['price']) ; 
+		$storeid =  _sqlInject($_POST['storeid']) ; 
+		$quantity = _sqlInject($_POST['quantity']) ; 
+		$timestamp = time() ; 
+		$date2 = date("m/d/Y h:i a") ; 
+		$date =  !empty($_POST['date']) ? $_POST['date'] : $date2  ; 
+		$total_price = $price * $quantity ; 
+		$showroomname = _get_showroom_name_from_id($showroomid) ; 
+		$storename = _get_store_name($storeid) ; 
+		global $user ; 
+		
+		
+		// insert data to joury_showroom table
+		
+		if(_check_product_in_store($productid,$storeid)){
+			$result_handle =  db_query("select * from `joury_store` where `productid` = %d and `storeid` = %d " ,$productid , $storeid ) ;
+			$result = db_fetch_object($result_handle) ; 
+			$old_quantity  =  $result->quantity ; 	
+			$old_price  =  $result->price ;
+			$old_total_price = $old_price*$old_quantity ; 
+			$old_new_quantity =  $old_quantity + $quantity ; 
+			$old_new_total_price =  $old_total_price 	+ $total_price ; 
+			$old_new_unit_price = $old_new_total_price/$old_new_quantity ; 
+			if((is_float($old_new_quantity) || is_int($old_new_quantity)) && (is_float($old_new_unit_price) || is_int($old_new_unit_price)) && $old_new_quantity != 0 &&  $old_new_unit_price != 0 ){ 
+				db_query("update `joury_store` set `quantity` = %f , `price` = %f where storeid=%d and productid=%d ",$old_new_quantity ,$old_new_unit_price,$storeid,$productid )	 ; 		
+				db_query("update `joury_showroom` set `quantity` = `quantity` - %f where `showroomid` = %d and `productid` = %d", $quantity,$showroomid,$productid ) ; 
+				$quantity_in_showroom_now = db_query("select `quantity` from `joury_showroom` where `showroomid` = %d and `productid` = %d ",$showroomid, $productid ) ; 
+				$quantity_in_showroom_now_obj = db_fetch_object($quantity_in_showroom_now) ; 
+				$quantity_in_showroom_now = $quantity_in_showroom_now_obj->quantity ; 
+				if($quantity_in_showroom_now == '0'){
+					db_query("delete from `joury_showroom` where `showroom` = %d and `productid` = %d " ,$showroomid,$productid) ; 
+				}	
+		
+		
+			// insert into showroom imports logs:{joury_log_store_imports}		
+			db_query("insert into `joury_log_store_imports` (`storeid`,`storename`,`productid`,`productname`,`quantity`,`price`,`showroomid`,`showroomname`,`date`,`author`) values 
+			(%d,'%s',%d,'%s',%d,%f,%d,'%s','%s','%s')"
+			,$storeid,$storename,$productid,$productname,$quantity,$price,$showroomid,$showroomname,$date,$user->name) ; 	
+			}else {
+				echo "<div class='message error' > Bad input..!! </div>" ; 	
+			}
+
+		}else{
+			
+					db_query("insert into `joury_store` (`storeid`,`storename`,`productid`,`productname`,`quantity`,`price`) values (%d,'%s',%d,'%s',%d,%f)",$storeid,$storename,$productid,$productname,$quantity,$price ) ; 		
+					db_query("update `joury_showroom` set `quantity` = `quantity` - %f where `showroomid` = %d and `productid` = %d", $quantity,$showroomid,$productid ) ; 		
+					$quantity_in_showroom_now = db_query("select `quantity` from `joury_showroom` where `showroomid` = %d and `productid` = %d ",$showroomid, $productid ) ; 
+					$quantity_in_showroom_now_obj = db_fetch_object($quantity_in_showroom_now) ; 
+					$quantity_in_showroom_now = $quantity_in_showroom_now_obj->quantity ; 
+					if($quantity_in_showroom_now == '0'){
+						db_query("delete from `joury_showroom` where `showroomid` = %d and `productid` = %d " ,$showroomid,$productid) ; 
+					}		
+					
+			// insert into showroom imports logs:{joury_log_showroom_imports}		
+			db_query("insert into `joury_log_store_imports` (`storeid`,`storename`,`productid`,`productname`,`quantity`,`price`,`showroomid`,`showroomname`,`date`,`author`) values 
+			(%d,'%s',%d,'%s',%d,%f,%d,'%s','%s','%s')"
+			,$storeid,$storename,$productid,$productname,$quantity,$price,$showroomid,$showroomname,$date,$user->name) ; 	
+			
+					 		
+			}
+			
+			
+		// the end of inserting data into joury_showroom table	
+		
+		
+		
+		
+		
+		
+		
+	}else{
+		return ; 	
+	}		
+}	
+
+
+
+
+/**
+* Private function : de bt3mil el process lama showroom bia5od product mn el store
+*/
+function _showroom_fromstore_process(){
+	//"showroomid":showroomid,"productid" : productid,"price":price,"storeid":storeid,"quantity":quantity,"date":date
+	if(!empty($_POST['showroomid']) && !empty($_POST['productid']) &&!empty($_POST['price']) &&!empty($_POST['storeid']) &&!empty($_POST['quantity']) &&!empty($_POST['date'])){
+		$showroomid = _sqlInject($_POST['showroomid']) ; 
+		$productid =  _sqlInject($_POST['productid']) ; 
+		$productname =  _get_product_name($productid) ; 
+		$price = _sqlInject($_POST['price']) ; 
+		$storeid =  _sqlInject($_POST['storeid']) ; 
+		$quantity = _sqlInject($_POST['quantity']) ; 
+		$date =  $_POST['date'] ; 
+		$total_price = $price * $quantity ; 
+		$showroomname = _get_showroom_name_from_id($showroomid) ; 
+		$storename = _get_store_name($storeid) ; 
+		global $user ; 
+		
+		
+		// insert data to joury_showroom table
+		
+		if(_check_product_in_showroom($productid,$showroomid)){
+			$result_handle =  db_query("select * from `joury_showroom` where `productid` = %d and `showroomid` = %d " ,$productid , $showroomid ) ;
+			$result = db_fetch_object($result_handle) ; 
+			$old_quantity  =  $result->quantity ; 	
+			$old_price  =  $result->price ;
+			$old_total_price = $old_price*$old_quantity ; 
+			$old_new_quantity =  $old_quantity + $quantity ; 
+			$old_new_total_price =  $old_total_price 	+ $total_price ; 
+			$old_new_unit_price = $old_new_total_price/$old_new_quantity ; 
+			if((is_float($old_new_quantity) || is_int($old_new_quantity)) && (is_float($old_new_unit_price) || is_int($old_new_unit_price)) && $old_new_quantity != 0 &&  $old_new_unit_price != 0 ){ 
+				db_query("update `joury_showroom` set `quantity` = %f , `price` = %f where showroomid=%d and productid=%d ",$old_new_quantity ,$old_new_unit_price,$showroomid,$productid )	 ; 		
+				db_query("update `joury_store` set `quantity` = `quantity` - %f where `storeid` = %d and `productid` = %d", $quantity,$storeid,$productid ) ; 
+				$quantity_in_store_now = db_query("select `quantity` from `joury_store` where `storeid` = %d and `productid` = %d ",$storeid, $productid ) ; 
+				$quantity_in_store_now_obj = db_fetch_object($quantity_in_store_now) ; 
+				$quantity_in_store_now = $quantity_in_store_now_obj->quantity ; 
+				if($quantity_in_store_now == '0'){
+					db_query("delete from `joury_store` where `storeid` = %d and `productid` = %d " ,$storeid,$productid) ; 
+				}	
+		
+		
+			// insert into showroom imports logs:{joury_log_showroom_imports}		
+			db_query("insert into `joury_log_showroom_imports` (`showroomid`,`showroomname`,`productid`,`productname`,`quantity`,`price`,`storeid`,`storename`,`date`,`author`) values 
+			(%d,'%s',%d,'%s',%d,%f,%d,'%s','%s','%s')"
+			,$showroomid,$showroomname,$productid,$productname,$quantity,$price,$storeid,$storename,$date,$user->name) ; 	
+			}else {
+				echo "<div class='message error' > Bad input..!! </div>" ; 	
+			}
+
+		}else{
+			
+					db_query("insert into `joury_showroom` (`showroomid`,`showroomname`,`productid`,`productname`,`quantity`,`price`) values (%d,'%s',%d,'%s',%d,%f)",$showroomid,$showroomname,$productid,$productname,$quantity,$price ) ; 		
+					db_query("update `joury_store` set `quantity` = `quantity` - %f where `storeid` = %d and `productid` = %d", $quantity,$storeid,$productid ) ; 		
+					$quantity_in_store_now = db_query("select `quantity` from `joury_store` where `storeid` = %d and `productid` = %d ",$storeid, $productid ) ; 
+					$quantity_in_store_now_obj = db_fetch_object($quantity_in_store_now) ; 
+					$quantity_in_store_now = $quantity_in_store_now_obj->quantity ; 
+					if($quantity_in_store_now == '0'){
+						db_query("delete from `joury_store` where `storeid` = %d and `productid` = %d " ,$storeid,$productid) ; 
+					}		
+					
+			// insert into showroom imports logs:{joury_log_showroom_imports}		
+			db_query("insert into `joury_log_showroom_imports` (`showroomid`,`showroomname`,`productid`,`productname`,`quantity`,`price`,`storeid`,`storename`,`date`,`author`) values 
+			(%d,'%s',%d,'%s',%d,%f,%d,'%s','%s','%s')"
+			,$showroomid,$showroomname,$productid,$productname,$quantity,$price,$storeid,$storename,$date,$user->name) ; 	
+			
+					 		
+			}
+			
+			
+		// the end of inserting data into joury_showroom table	
+		
+		
+		
+		
+		
+		
+		
+	}else{
+		return ; 	
+	}		
+}
+
+
+
+/**
+* private function that generate green table in  joury/store-product
+*/
+
+function _showroom_products_greentable_generator() {
+	
+	if(empty($_POST['selected-option'])  || $_POST['selected-option'] == 'nothing' ){
+		echo "please select option from the right menu.."  ; 		
+	}else{
+		$selectedoption = _sqlInject($_POST['selected-option']) ;
+		$productid = _sqlInject($_POST['productid']) ;
+		$showroomid = _sqlInject($_POST['showroomid']) ;
+		$price = _get_showroom_product_price($showroomid,$productid) ; 
+		$rate = _get_rate_of_product($productid) ;
+		$selling_price = (($price) + ((( $price) / 100 ) * $rate) )  ; 
+		$product_quantity = _get_showroom_product_quantity($showroomid,$productid) ;
+		$timestamp = time() ; 
+		$date = date("m/d/Y h:i a" , $timestamp) ;  
+		if($selectedoption == 'sell'){
+		echo "<center><table id='joury-showroom-products-option-table' >" ; 
+			echo "<tr id='joury-showroom-products-option-head-row'>" ; 
+				echo "<td id='joury-showroom-products-option-head-column' ><strong>CLIENT NAME</strong></td>" ; 
+				echo "<td id='joury-showroom-products-option-head-column' ><strong>QUANTITY</strong></td>" ; 
+				echo "<td id='joury-showroom-products-option-head-column' ><strong>DATE</strong></td>" ; 
+				echo "<td  id='joury-showroom-products-option-head-column' ><strong>OPTION</strong></td>" ; 	
+
+			echo "</tr>" ; 
+			echo "<tr id='joury-showroom-products-option-head-row'>" ; 
+				echo "<td id='joury-showroom-products-option-head-column' >";
+				_print_select_input_type_clients('client','joury_clients','firstname','cid','select-client') ; 
+				echo "</td>" ; 
+				echo "<div style='display:none'><input type='hidden' id='sellprice' value='".$selling_price."' /></div>" ; 		
+				echo "<div style='display:none'><input type='hidden' id='price' value='".$price."' /></div>" ; 		
+				echo "<div style='display:none'><input type='hidden' id='productid' value='".$productid."' /></div>" ; 	
+				echo "<div style='display:none'><input type='hidden' id='showroomid' value='".$showroomid."' /></div>" ; 		 
+				echo "<div style='display:none'><input type='hidden' id='productquantity' value='".$product_quantity."' /></div>" ; 						
+				echo "<td id='joury-store-products-option-head-column' >".'<input type="text" id="quantity" name="quantity" value="1" size="5" />'."</td>" ; 
+				echo "<td id='joury-store-products-option-head-column' ><input type='text' id='date' name='date' value='$date'   /></td>" ; 
+				echo "<td id='joury-store-products-option-head-column' ><input type='submit' id='client-sell-product' name='staff-submit-product' value='CASH'   /></td>" ; 
+		
+
+			
+			echo "</tr>" ; 		
+		echo "<table></center>"	;		
+		}
+	
+		if($selectedoption == 'store'){
+		echo "<center><table id='joury-showroom-products-option-table' >" ; 
+			echo "<tr id='joury-showroom-products-option-head-row'>" ; 
+				echo "<td id='joury-showroom-products-option-head-column' ><strong>STORE NAME</strong></td>" ; 
+				echo "<td id='joury-showroom-products-option-head-column' ><strong>QUANTITY</strong></td>" ; 
+				echo "<td id='joury-showroom-products-option-head-column' ><strong>DATE</strong></td>" ; 
+				echo "<td id='joury-showroom-products-option-head-column' ><strong>OPTION</strong></td>" ; 
+			echo "</tr>" ; 
+			echo "<tr id='joury-showroom-products-option-head-row'>" ; 
+				echo "<td id='joury-showroom-products-option-head-column' >";
+				_print_select_input_type('storeid','joury_stores','name','sid','select-store') ; 
+				echo "</td>" ; 
+				echo "<div style='display:none'><input type='hidden' id='sellprice' value='".$selling_price."' /></div>" ; 		
+				echo "<div style='display:none'><input type='hidden' id='price' value='".$price."' /></div>" ; 		
+				echo "<div style='display:none'><input type='hidden' id='productid' value='".$productid."' /></div>" ; 	
+				echo "<div style='display:none'><input type='hidden' id='showroomid' value='".$showroomid."' /></div>" ; 		 
+				echo "<div style='display:none'><input type='hidden' id='productquantity' value='".$product_quantity."' /></div>" ; 		
+				echo "<td id='joury-showroom-products-option-head-column' >".'<input type="text" id="quantity" name="quantity" value="1" size="5" />'."</td>" ; 
+				echo "<td id='joury-showroom-products-option-head-column' ><input type='text' id='date' name='date' value='$date'   /></td>" ; 				
+				echo "<td id='joury-showroom-products-option-head-column' ><input type='submit' id='store-back-product' name='showroom-submit-product' value='EXPORT'   /></td>" ; 
+			echo "</tr>" ; 		
+		echo "<table></center>"	;		
+			
+		}
+	}			
+}
+
+
+
+
+
+/**
+* Private function that return the content of showroom products page
+*/
+function _showroom_products_page($showrooms){
+	return theme('showroom_products',$showrooms)	 ; 
+}	
+
+
+
+
+
+
+/**
+* private function to get the products of current showroom in a table view
+*/
+function _showroom_products_page_ajax(){
+	$showroomid = arg(3)  ;
+	$showroomid = _sqlInject($showroomid) ; 
+	$products = _get_showroom_products($showroomid) ; 
+	$number_of_products = count($products) ; 
+	global $user ; 
+	$timestamp = time(); 
+	$date = date("m/d/Y h:m A" , $timestamp) ;
+	// make requests
+	echo "<form method='post' action=''  >" ;  
+	echo "<input type='hidden' name='author' id='author' value='".$user->name."' />" ;  
+	echo "<input type='hidden' name='showroomid' id='showroomid' value='{$showroomid}' />" ;  
+	echo "<input type='hidden' name='date' id='date' value='{$date}' />" ;  
+	echo "<table id='joury-showroom-requests-selected-result-table' > " ;  // when someone select product to request
+		
+	echo "</table>" ; 
+	
+	echo "<table id='joury-showroom-requests-table' > " ; 
+	echo "<tr>" ; 
+		echo "<td>" ; 
+			echo "<strong> SUPPLIER NAME:</strong>" ; 
+		echo "</td>" ; 
+		echo "<td>" ;
+			_print_select_input_type('request-supplierid','joury_suppliers','name','sid','select-supplier') ; 
+		echo "</td>" ; 
+		
+		echo "<td>" ; 
+		echo "<strong>SEARCH FOR PRODUCT NAME:</strong><br/>" ; 
+		echo "</td>" ; 
+		echo "<td>" ;
+				echo "<input type='text' id='productname' name='searchproductname' /> " ;
+		echo "</td>" ; 
+		
+		echo "<td>" ; 
+		echo "<input type='submit' name='make-request' id='make-request' value='MAKE REQUEST'  disabled='' /> " ;
+		echo "</td>" ; 
+	echo "</tr>" ; 
+	
+	
+	
+	echo "</table>" ; 
+	echo "</form>" ; 
+
+	echo "<table id='joury-showroom-requests-search-result-table' > " ; // result when someone search for product
+		
+	echo "</table>" ; 
+
+
+
+
+
+
+
+
+	// view showroom products	
+	if($number_of_products == 0 ){
+		echo "NO PRODUCTS IN THIS showroom" ; 
+		return ;	
+	}
+	echo "<table id='joury-showroom-products-table' >" ; 
+		echo "<tr id='joury-showroom-products-head-row'>" ; 
+			echo "<td id='joury-showroom-products-head-column' >PRODUCT ID</td>" ;
+			echo "<td id='joury-showroom-products-head-column' >PRODUCT NAME</td>" ; 
+			echo "<td id='joury-showroom-products-head-column' >QUANTITY</td>" ; 
+			//echo "<td id='joury-showroom-products-head-column' >ITEM PRICE</td>" ; 
+			
+			//echo "<td id='joury-showroom-products-head-column' >STOCK PRICE</td>" ; 
+			//echo "<td id='joury-showroom-products-head-column' >SELLING PRICE</td>" ; 			
+			
+			echo "<td id='joury-showroom-products-head-column' >OPTIONS</td>" ; 
+		
+		echo "</tr>" ; 
+		for($k=0 ; $k < $number_of_products ; $k++){
+			$rate = _get_rate_of_product($products[$k]->productid) ;
+			$selling_price = (($products[$k]->price) + ((( $products[$k]->price) / 100 ) * $rate) ) ;
+		echo "<tr value='".$showroomid."'>" ; 
+			echo "<td>".$products[$k]->productid."</td>" ;
+			echo "<td>".$products[$k]->productname."</td>" ; 
+			echo "<td>".$products[$k]->quantity."</td>" ; 
+		//	echo "<td>".$products[$k]->price."</td>" ;
+
+		//	echo "<td>".$products[$k]->price."</td>" ; 	
+		//	echo "<td>".$selling_price."</td>" ; 
+			
+			echo "<td>";
+			echo "<select id='joury-showroom-menu' >" ; 
+			echo "<option value='nothing' selected> select-option </option>" ; 
+		if(user_access('joury sales')){
+	//		echo "<option value='sell'> Sell to client </option>" ; 
+		}
+		if(user_access('joury showroom')){
+			echo "<option value='store'> Back to store </option>" ; 
+		}	
+			echo "</select>" ; 
+			echo "</td>" ; 
+			
+		
+			
+		echo "</tr>" ; 
+			}
+	echo "</table>" ; 	 	
+			
+	
+}	
+
+/**
+* Implementation of hook_theme
+*/
+
+function joury_showroom_theme(){
+	return array(
+		'showroom_products' => array(
+				'template' => 'showroom_products' , 
+				'arguments' => array('showrooms' => '' ) , 
+		),	
+
+	) ; 
+}	
+	
+
+
+/**
+* Implementation of hook_perm
+*/
+function joury_showroom_perm(){
+	return array('joury sales','joury showroom', "menu- showrooms products", "report- showrooms alarm") ; 
+}	
+
+
+
+
+/**
+* generate products when someone in the showroom search for product to make request
+*/
+function _joury_showroom_products_requests_table_content_generator(){
+	if($_POST['keyword']){
+		global $user ; 
+		$supplierid = $_POST['productsupplier'] ; 
+		$products = _get_products_by_keyword_and_supplier($_POST['keyword'] , $supplierid) ; 	
+		$number_of_products = count($products) ; 
+		if($number_of_products  == 0){ // no products with this name
+			echo "<tr class='message error' >" ;  
+				echo "<td colspan='5' >" ; 
+					echo "<center>NO PRODUCT WITH THIS NAME</center>"  ; 
+				echo "</td>" ; 
+			echo "</tr>" ; 
+			return  0 ; 	
+		}
+		echo "<tr id='joury-showroom-products-head-column' >" ; 
+			echo "<td>" ; 
+				echo "PRODUCT NAME" ;
+			echo "</td>" ; 
+			
+			echo "<td id='joury-showroom-products-head-column'  >" ; 
+				echo "QUANTITY" ;
+			echo "</td>" ; 
+			
+			echo "<td id='joury-showroom-products-head-column'  >" ; 
+				echo "SELECT" ;
+			echo "</td>" ; 
+		echo "</tr>" ; 
+		$variable = rand(1,32425242524);
+		for($k=0 ; $k<$number_of_products ; $k++){ // there is products	
+			echo "<tr>" ; 
+				echo "<td>" ; 
+					echo $products[$k]->name ; 
+				echo "</td>" ;
+				
+				echo "<td>" ; 
+					echo "<input type='text' name='quantity-".$k.$variable."' id='quantity' disabled='' value='1' />" ; 
+				echo "</td>" ;  
+				
+				echo "<td>" ; 
+					echo "<input type='checkbox' name='select-".$k.$variable."' id='select' />" ; 
+				echo "</td>" ; 
+				
+				echo "<td id='hidden-column'  style='display:none;' />";
+					echo "<input type='hidden' name='productname-".$k.$variable."' id='productname' value='".$products[$k]->name."' />" ;
+					echo "<input type='hidden' name='productid-".$k.$variable."' id='productid' value='".$products[$k]->pid."' />" ;
+				echo "</td>" ; 
+			echo "</tr>" ; 
+		}		
+		
+	}	
+}	
+
+
+
+/**
+* private function to get all the showrooms
+*/
+function _get_all_showrooms(){
+$result_handle = db_query("select * from `joury_showrooms` ")  ;
+while($result_obj = db_fetch_object($result_handle)){
+	$result[] = $result_obj ; 
+}		
+	
+	return $result ; 
+}	
+
+/**
+* private function that check if this product exist in this place before or not
+*/
+function _check_product_in_showroom($productid,$showroomid){
+	$result_handle = db_query("select count(*) from `joury_showroom` where `productid` = %d and `showroomid` = %d " ,$productid , $showroomid ) ; 
+	$result = db_fetch_array($result_handle) ; 
+	if($result['count(*)'] == 1 ){
+		return  1 ; 
+	}else{
+		return 0 ; 	
+	}		
+}	
+
+
+/**
+* private function to get the showroom name
+*/
+
+function _get_showroom_name($showroomid){
+	$result_handle = db_query("select name from `joury_showrooms` where `sid` = %d " , $showroomid ) ; 
+	$result_obj = db_fetch_object($result_handle) ; 
+	$result = $result_obj->name;  
+	if(!empty($result)){
+		return  $result ; 
+	}else{
+		return '' ; 	
+	}	
+}	
+
+
+
+
+
+/**
+* private function to get showrooms 
+*/
+
+function _get_showrooms(){
+	$result_handle = db_query("select * from `joury_showrooms` ") ;  
+	while($result_obj = db_fetch_object($result_handle)){
+		$showrooms[] = 	$result_obj  ; 
+	}	 
+	return $showrooms ;  
+}	
+
+
+/**
+* private function to get current showroom id products
+*/
+
+function _get_showroom_products($showroomid){
+	$result_handle = db_query("select * from `joury_showroom` where `showroomid` = %d " ,$showroomid)  ;  
+	while($result_obj = db_fetch_object($result_handle)){
+		$showroomproducts[] = 	$result_obj  ; 
+	}	 
+	return $showroomproducts ;  
+}	
+
+
+/**
+* private function to get current product price
+*/
+
+function _get_showroom_product_price($showroomid , $productid){
+	$result_handle = db_query("select price from `joury_showroom` where `showroomid` = %d and `productid` = %d" ,$showroomid, $productid)  ;  
+	$result_obj = db_fetch_object($result_handle) ; 
+	return $result_obj->price ;  
+}	
+
+
+
+/**
+* Private function to get the rate of product
+*/
+function _get_rate_of_product($productid){
+	$result_handle = db_query("select * from `joury_products` where pid = %d" , $productid) ; 
+	$result = db_fetch_object($result_handle) ; 
+	$result = $result->rate ; 
+	return $result ;  
+}	
+
+
+/**
+* private function to get current product quantity
+*/
+
+function _get_showroom_product_quantity($showroomid , $productid){
+	$result_handle = db_query("select quantity from `joury_showroom` where `showroomid` = %d and `productid` = %d" ,$showroomid, $productid)  ;  
+	$result_obj = db_fetch_object($result_handle) ; 
+	return $result_obj->quantity ;  
+}	
+
+
+
+
+/**
+* Private function for alarm page
+*/
+
+function _joury_showrooms_products_alarm(){
+	$url = drupal_get_path('module' ,'joury_showroom') ; 
+	drupal_add_css($url."/joury_showroom.css") ;
+	
+	$front = url('', array('absolute' => TRUE)) ; 
+	$combox_box_module_path = drupal_get_path('module' , 'joury_register_service') ; 
+	drupal_add_js($combox_box_module_path."/codebase/dhtmlxcommon.js") ; 
+	drupal_add_js($combox_box_module_path."/codebase/dhtmlxcombo.js") ; 
+	drupal_add_css($combox_box_module_path."/codebase/dhtmlxcombo.css") ; 	
+	
+	drupal_add_js($url."/alarmpage.js") ; 
+	drupal_add_js( array('frontpage' => $front) , 'setting') ; 
+	
+	if(!empty($_COOKIE['alarmproducts'])){
+		$result = $_COOKIE['alarmproducts'] ;
+		$result =  json_decode($result , $assoc = null);
+		$number_of_results = count($result);
+
+			$content = "<table id='alarm-showroom-table' >" ; 	
+			$content .= "<tr><td id='joury-showroom-products-head-column' > PRODUCT NAME </td> <td id='joury-showroom-products-head-column' >QUANTITY</td></tr>" ; 
+			for($k=0 ; $k<$number_of_results  ; $k++){	
+			$content .=  "<tr><td>".$result[$k]->productname."</td><td>".$result[$k]->quantity."</td></tr>" ;
+			}
+			$content .= "</table>" ; 
+			
+		setcookie('alarmproducts',NULL, time()+(-234252425));	
+	}else{
+		$content = " " ; 
+	}	
+	return $content.drupal_get_form("joury_showrooms_products_alarm_form") ;  
+}	
+
+
+
+
+/**
+* form for alarm page
+*/
+
+function joury_showrooms_products_alarm_form($form_state){
+	for ($k = 1 ;  $k <= 100 ; $k++){
+		$deadquantity[$k] = $k ; 
+	}	
+	
+	// showroom select array
+	$showrooms[''] = '' ; 
+	$result_handle = db_query("select `name` from {joury_showrooms}") ;
+	while($result_obj = db_fetch_object($result_handle)) {
+		$showrooms[$result_obj->name]	 = check_plain($result_obj->name) ; 
+	}	
+	
+	
+	$form['container']  =  array(
+		'#type' => 'fieldset',
+		'#collapsible' => TRUE , 
+		'#attributes' => array('style'=>'margin-bottom:500px;') ,
+		'#title' => t("SHOWROOM"),
+	); 	
+		
+	$form['container']['showroom']  =  array(
+		'#title' => t("SHOWROOM NAME"),
+		'#type' => 'select', 
+	//	'#autocomplete_path' => 'showroom/name/autocomplete',
+	//	'#size' => 30 , 
+		'#options' => $showrooms ,
+	); 
+	$form['container']['quantity']  =  array(
+		'#title' => t("DEAD QUANTITY"),
+		'#type' => 'select', 
+		'#options' => $deadquantity,
+		'#default_value' => 10 , 
+	); 
+	$form['container']['submit'] = array(
+			'#type' => 'submit' , 
+			'#value' => t('GET') , 
+			'#attributes' => array('style'=>'position:relative; left:10px; bottom: 4px;') ,
+	);		
+	
+	return $form ; 
+}	
+
+
+/**
+* alarm page form validate
+*/
+function joury_showrooms_products_alarm_form_validate($form,$formstate){
+	if(empty($form['#post']['showroom'])){
+		form_set_error('showroom' , 'please select showroom name') ; 	
+	}		
+}	
+
+
+/**
+* alarm page form submit
+*/
+function joury_showrooms_products_alarm_form_submit($form,$form_state){
+		if(!empty($form['#post']['showroom']) && !empty($form['#post']['quantity'])){
+			$keyword = $form['#post']['showroom'] ; 
+			$number = $form['#post']['quantity'] ;
+			$result_handle = db_query("select * from {joury_showroom} where `showroomname` = '%s'  and `quantity` <= %d " ,$keyword,$number) ; 
+			while($result_obj = db_fetch_object($result_handle)){
+					$result[] = $result_obj ; 
+			}			
+			$number_of_results = count($result) ; 
+			if($number_of_results == 0){
+				drupal_set_message("<div class='message warning' ><center>NO PRODUCTS UNDER THIS QUANTITY IN THIS SHOWROOM</center></div>") ; 
+				return ; 	
+			}
+			
+			
+			setcookie('alarmproducts', json_encode($result) , time()+(60));
+		}	
+}	
+
+
+/**
+* generate autocomplete field for showroom
+*/
+
+function showroom_name_autocomplete($keyword){
+	$result_handle = db_query("select `name` from {joury_showrooms} where `name` like '%%%s%%'", $keyword) ;
+	while($result_obj = db_fetch_object($result_handle)) {
+		$result[$result_obj->name]	 = check_plain($result_obj->name) ; 
+	}
+	
+	echo drupal_to_js($result) ; 
+	exit() ; 
+}
+

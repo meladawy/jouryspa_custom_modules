@@ -1,0 +1,5 @@
+; $Id$
+name = joury service categories
+description = control the services categories..(spa category, salong category)
+core = 6.x
+package = joury spa

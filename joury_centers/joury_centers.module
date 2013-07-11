@@ -1,0 +1,90 @@
+<?php
+// $Id$
+
+
+/**
+* Implementation of hook_nodeapi
+*/
+
+function joury_centers_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL){
+	switch($op){
+			case 'insert' :
+			if($node->type == 'centers'){
+				$name = $node->title ; 
+				$nid = $node->nid ; 
+				$description = $node->body ; 
+				db_query("insert into {joury_centers} (`nid` , `centername` , `description`)  values (%d , '%s', '%s')" , $nid, $name, 					$description); 
+			}		
+			break; 		
+			
+			case 'update' :
+			if($node->type == 'centers'){
+				$name = $node->title ; 
+				$nid = $node->nid ; 
+				$description = $node->body ; 
+				db_query("update  {joury_centers} set  `centername` = '%s' ,`description` = %d  where `nid` = %d " ,  $name , $description
+				,$nid); 
+			}		
+			break;
+			
+			case 'delete' :
+			if($node->type == 'centers'){
+				$name = $node->title ; 
+				$nid = $node->nid ; 
+				$description = $node->body ; 
+				db_query("delete from  {joury_centers} where `nid` = %d " , $nid); 
+			}		
+			break;
+		
+		
+		}	
+}
+
+
+
+
+/**
+* Implementation of hook_jourymenu
+*/
+
+function joury_centers_jourymenu(){
+	return array(
+	'centers',
+	'joury_centers',
+	array('id' => 'ID','centername' => 'NAME'),
+	array(),
+	'',
+	'',
+	); 	
+}
+
+
+
+/**
+* Get Current centers...in array format.... used as select menu
+*/
+
+function _get_centers_array(){
+	$result_handle = db_query("select * from {joury_centers} ") ;
+	
+	while ($result_obj = db_fetch_object($result_handle)){
+		$result[$result_obj->centername] = $result_obj->centername ; 	
+	}		
+	return $result ; 
+}
+
+
+
+
+/**
+* Get Center Id Of Center Name
+*/
+
+function _get_center_id_of_name($centername) {
+	$result_handle = db_query("select * from {joury_centers} where `centername` =  '%s' limit 1" , $centername) ;
+	$result_obj =  db_fetch_object($result_handle) ; 
+	return $result_obj->id; 
+	
+}
+
+

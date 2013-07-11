@@ -1,0 +1,25 @@
+#jouryspa-page-view-head {
+	border-width: 4px;
+	padding: 4px;
+	border-style: ridge;
+	border-right-width: 0px;
+	border-color: gray;
+	-moz-border-radius: ;
+	text-align: center;
+	background:gray ; 
+	color: white;
+	font-weight: bolder;
+	text-transform:uppercase;
+}
+
+#service-time-table{
+	width: 98%;
+	border-style: hidden;
+	border-width: 8px;
+}
+#service-time-table tr{
+
+}
+#service-time-table td{
+
+}

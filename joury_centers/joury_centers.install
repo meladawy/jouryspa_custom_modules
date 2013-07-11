@@ -1,0 +1,51 @@
+<?php
+// $Id$
+
+/**
+* Implementation of hook_install
+*/
+function joury_centers_install(){
+ 	drupal_install_schema('joury_centers'); 
+}
+
+
+/**
+* Implementation of hook_uninstall
+*/
+function joury_centers_uninstall(){
+ 	drupal_uninstall_schema('joury_centers'); 
+}
+
+
+/**
+* Implementation of hook_schema
+*/
+function joury_centers_schema(){
+	$schema['joury_centers'] = array(
+		'description' => 'this table control the stores ',
+		'fields' => array(
+			'id' => array('type' => 'serial' , 'unsigned' => TRUE , 'not null' => TRUE,) , 
+			'nid' => array('type' => 'int' , 'unsigned' => TRUE , 'not null' => TRUE, 'default' => 0 , ) ,
+			'centername' => array('type' => 'varchar' ,'length' => 40, 'not null' => TRUE, 'default' => '' , ) ,	
+			'description' => array('type' => 'text' , 'not null' => TRUE, 'default' => '' , ) ,	
+
+		), 
+		'primary key' => array('id'),
+	
+	);
+	
+	$schema['joury_centers_users'] = array(
+		'description' => 'this table control the stores ',
+		'fields' => array(
+			'id' => array('type' => 'serial' , 'unsigned' => TRUE , 'not null' => TRUE,) , 
+			'uid' => array('type' => 'int' , 'unsigned' => TRUE , 'not null' => TRUE, 'default' => 0 , ) ,
+			'centername' => array('type' => 'varchar' ,'length' => 40, 'not null' => TRUE, 'default' => '' , ) ,	
+			'centerid' => array('type' => 'int' , 'unsigned' => TRUE , 'not null' => TRUE, 'default' => 0 , ) ,
+
+		), 
+		'primary key' => array('id'),
+	
+	);	
+	
+	return $schema ; 
+}

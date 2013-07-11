@@ -1,0 +1,9 @@
+$(document).ready(start);
+
+function start(){
+	// make store name  select box a combo box	
+	window.dhx_globalImgPath = frontpage + "sites/all/modules/joury_register_service/codebase/imgs/";
+	var z=dhtmlXComboFromSelect("edit-store");
+	z.enableFilteringMode(true);
+	
+}

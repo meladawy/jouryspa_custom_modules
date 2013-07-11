@@ -1,0 +1,5 @@
+$(document).ready(start) ; 
+
+function start(){
+	alert("a77a") ; 	
+}	

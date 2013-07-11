@@ -1,0 +1,382 @@
+<?php
+// $Id$
+
+/**
+* Implementation of hook_nodeapi
+*/
+
+function joury_clients_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL){
+	switch($op) {	
+		case 'insert':
+		if($node->type == 'clients'){
+			$nodeid = $node->nid ;  
+			$firstname = $node->title ;  
+			$lastname = $node->field_clientlastname[0]['value'] ;  
+			$birthdate = $node->field_clientbirthdate[0]['value'] ;
+			$joiningdate = $node->field_clientjoiningdate[0]['value'] ;
+			$civilid = $node->field_clientcivilid[0]['value'] ;
+			$barcode = $node->field_clientbarcode[0]['value'] ;
+			$phone = $node->field_clientphone[0]['value'] ;
+			$mobile = $node->field_clientmobile[0]['value'] ;
+			$email = $node->field_clientemail[0]['value'] ;
+			$address = $node->field_clientaddress[0]['value'] ;		 
+			db_query("insert into {joury_clients} (`nid`,`firstname`,`lastname`,`birthdate` , `phone`, `mobile`, `email`,`address`, `civil_id`, `joiningdate`,`barcode`) values (%d,'%s','%s','%s','%s','%s','%s','%s','%s', '%s', '%s')",$nodeid,$firstname,$lastname,$birthdate,$phone,$mobile,$email,$address,$civilid, $joiningdate, $barcode) ;
+		}		
+		break;  	
+		
+		
+		case 'update' : 
+		if($node->type == 'clients'){
+			$nodeid = $node->nid ;  
+			$firstname = $node->title ;  
+			$lastname = $node->field_clientlastname[0]['value'] ;  
+			$birthdate = $node->field_clientbirthdate[0]['value'] ;
+			$joiningdate = $node->field_clientjoiningdate[0]['value'] ;
+			$civilid = $node->field_clientcivilid[0]['value'] ;
+			$barcode = $node->field_clientbarcode[0]['value'] ;			
+			$phone = $node->field_clientphone[0]['value'] ;
+			$mobile = $node->field_clientmobile[0]['value'] ;
+			$email = $node->field_clientemail[0]['value'] ;
+			$address = $node->field_clientaddress[0]['value'] ;		 
+			db_query("update {joury_clients} set  `firstname` = '%s' , `lastname` = '%s' , `birthdate` = '%s',  `phone` = '%s', `mobile` = '%s' , `email` = '%s' ,  `address` = '%s', `barcode` = '%s', `civil_id`='%s', `joiningdate` = '%s'   where `nid` = %d ",$firstname,$lastname,$birthdate,$phone,$mobile,$email,$address,$barcode,$civilid,$joiningdate , $nodeid) ; 
+		}		
+		break ;  
+		
+		case 'delete' :
+		if($node->type == 'clients'){
+			db_query("delete from {joury_clients} where `nid` = %d" , $node->nid) ; 
+		}	
+		break ; 
+	}
+}	
+
+
+
+/**
+* Implementation of hook_form_alter
+*/
+
+function joury_clients_form_alter(&$form, &$form_state, $form_id){
+	dsm($form_id) ;
+	if($form_id == 'clients_node_form'){
+		$url = drupal_get_path('module' , 'joury_clients') ; 
+		drupal_add_css($url.'/jouryclientstyle.css') ; 
+		drupal_add_css($url.'/smoothness/jquery-ui-1.8.14.custom.css') ;
+		drupal_add_js($url.'/js/jquery-1.5.1.min.js') ; 
+		drupal_add_js($url.'/js/jquery-ui-1.8.14.custom.min.js') ; 
+		drupal_add_js($url.'/script.js') ; 
+		$form['#validate'][] = '_clients_check_if_number_or_phone_exist_before' ; 
+		} 	
+}
+
+
+
+/**
+* check if staff phone/mobile number exist before
+*/
+function _clients_check_if_number_or_phone_exist_before($form, $form_state) {
+	$mobile = $form_state['values']['field_clientmobile'][0]['value'] ; 
+	$phone = $form_state['values']['field_clientphone'][0]['value'] ; 
+	$nid = $form['nid']['#value'] ; 
+	
+	$phone_result_handler = db_query("select count(*) from {joury_clients} where (phone = '%s') and `nid` != %d" , $phone, $nid) ; 
+	$phone_result_array = db_fetch_array($phone_result_handler) ; 
+	$phone_result = $phone_result_array['count(*)'] ;
+	if($phone_result > 0){
+		form_set_error('field_clientphone', 'This phone number is reserved for another client' ) ; 	
+	}
+	
+	$mobile_result_handler = db_query("select count(*) from {joury_clients} where (mobile = '%s') and `nid` != %d" , $mobile, $nid) ; 
+	$mobile_result_array = db_fetch_array($mobile_result_handler) ; 
+	$mobile_result = $mobile_result_array['count(*)'] ;
+	if($mobile_result > 0){
+		form_set_error('field_clientmobile', 'This mobile number is reserved for another client' ) ; 	
+	}	
+}	
+
+
+
+/**
+* Implementation of hook_menu
+*/
+
+function joury_clients_menu(){
+	
+	$items['ajax/clients/from-showroom/process'] = array( // de bt3mil el process lama 7d mn el staff bia5od product mn el showroom
+		'title' => t('') , 
+		'description' => t('') , 
+		'access arguments' => array('access content') ,
+		'page callback' => '_clients_fromshowroom_process',   
+		'type' => MENU_CALLBACK, 
+	);	
+		$items['ajax/clients/from-showroom/info'] = array( // de bt3mil el process lama 7d mn el staff bia5od product mn el showroom
+		'title' => t('') , 
+		'description' => t('') , 
+		'access arguments' => array('access content') ,
+		'page callback' => '_clients_fromshowroom_info',   
+		'type' => MENU_CALLBACK, 
+	);	
+	
+	return $items ; 
+	
+}	
+
+
+/**
+*
+*/
+function _clients_fromshowroom_process (){
+	if(!empty($_POST['clientid']) && !empty($_POST['productid']) &&!empty($_POST['price']) &&!empty($_POST['showroomid']) &&!empty($_POST['quantity']) &&!empty($_POST['date'])){
+		$clientid = _sqlInject($_POST['clientid']) ; 
+		$productid =  _sqlInject($_POST['productid']) ; 
+		$productname =  _get_product_name($productid) ; 
+		$sellprice = _sqlInject($_POST['sellPrice']) ;
+		$price = _sqlInject($_POST['price']) ; 
+		$showroomid =  _sqlInject($_POST['showroomid']) ; 
+		$quantity = _sqlInject($_POST['quantity']) ; 
+		$date =  _sqlInject($_POST['date']) ; 
+		$total_price = $sellprice * $quantity ; 
+		$totalprice = $total_price ; //duplicated
+		$clientname = _get_client_name($clientid) ; 
+		
+		
+		
+		
+		// insert data to joury_showroom table
+		
+		if(_check_product_in_client_bill($productid,$clientid)){
+			$result_handle =  db_query("select * from `joury_bill` where `productid` = %d and `clientid` = %d " ,$productid , $clientid ) ;
+			$result = db_fetch_object($result_handle) ; 
+			$old_quantity  =  $result->quantity ; 	
+			$old_price  =  $result->sellprice ;
+			$old_total_price = $old_price*$old_quantity ; 
+			$old_new_quantity =  $old_quantity + $quantity ; 
+			$old_new_total_price =  $old_total_price 	+ $total_price ; 
+			$old_new_unit_price = $old_new_total_price/$old_new_quantity ; 
+			$total_price_new = $old_new_unit_price  *  $old_new_quantity  ; 
+			if((is_float($old_new_quantity) || is_int($old_new_quantity)) && (is_float($old_new_unit_price) || is_int($old_new_unit_price)) && $old_new_quantity != 0 &&  $old_new_unit_price != 0 ){ 
+				db_query("update `joury_bill` set `quantity` = %f , `sellprice` = %f,`totalprice` = %f where clientid=%d and productid=%d ",$old_new_quantity ,$old_new_unit_price,$total_price_new,$clientid,$productid )	 ; 		
+				db_query("update `joury_showroom` set `quantity` = `quantity` - %f where `showroomid` = %d and `productid` = %d", $quantity,$showroomid,$productid ) ; 
+				$quantity_in_showroom_now = db_query("select `quantity` from `joury_showroom` where `showroomid` = %d and `productid` = %d ",$showroomid, $productid ) ; 
+				$quantity_in_showroom_now_obj = db_fetch_object($quantity_in_showroom_now) ; 
+				$quantity_in_showroom_now = $quantity_in_showroom_now_obj->quantity ; 
+				if($quantity_in_showroom_now == '0'){
+					db_query("delete from `joury_showroom` where `showroomid` = %d and `productid` = %d " ,$showroomid,$productid) ; 
+				}	
+			}else {
+				echo "<div class='message error' > Bad input..!! </div>" ; 	
+			}
+
+		}else{
+			
+					db_query("insert into `joury_bill` (`clientid`,`clientname`,`productid`,`productname`,`showroomid`,`quantity`,`sellprice`,`totalprice`,`date`) values (%d,'%s',%d,'%s',%d,%d,%f,%f,'%s')",$clientid,$clientname,$productid,$productname,$showroomid,$quantity,$sellprice,$totalprice,$date ) ; 		
+					db_query("update `joury_showroom` set `quantity` = `quantity` - %f where `showroomid` = %d and `productid` = %d", $quantity,$showroomid,$productid ) ; 		
+					$quantity_in_showroom_now = db_query("select `quantity` from `joury_showroom` where `showroomid` = %d and `productid` = %d ",$showroomid, $productid ) ; 
+					$quantity_in_showroom_now_obj = db_fetch_object($quantity_in_showroom_now) ; 
+					$quantity_in_showroom_now = $quantity_in_showroom_now_obj->quantity ; 
+					if($quantity_in_showroom_now == '0'){
+						db_query("delete from `joury_showroom` where `showroomid` = %d and `productid` = %d " ,$showroomid,$productid) ; 
+					}				 		
+			}
+			
+			
+		// the end of inserting data into joury_showroom table	
+		
+		
+		
+		
+		
+		
+		
+		// now i should insert to report and logs
+		
+		
+		
+	}else{
+		return ; 	
+	}		 
+
+}
+
+/**
+* private function to get the client name
+*/
+
+function _get_client_name($clientid){
+	$result_handle = db_query("select firstname,lastname from `joury_clients` where `cid` = %d " , $clientid ) ; 
+	$result_obj = db_fetch_object($result_handle) ; 
+	$resultfirst = $result_obj->firstname;  
+	$resultlast = $result_obj->lastname; 
+	$result = $resultfirst." ".$resultlast ; 
+	if(!empty($result)){
+		return  $result ; 
+	}else{
+		return '' ; 	
+	}	
+}	
+
+
+/**
+*
+*/
+
+function _check_product_in_client_bill($productid,$clientid){
+	$result_handle = db_query("select count(*) from `joury_bill` where `productid` = %d and `clientid` = %d and `status` = 0" ,$productid , $clientid ) ; 
+	$result = db_fetch_array($result_handle) ; 
+	if($result['count(*)'] == 1 ){
+		return  1 ; 
+	}else{
+		return 0 ; 	
+	}		
+	
+}	
+
+/**
+* Implementation of hook_jourymenu
+*/
+
+function joury_clients_jourymenu(){
+	return array(
+	'clients',
+	'joury_clients',
+	array('phone' => 'phone','mobile' => 'mobile'),
+	//array('tablename' => 'joury_clients' , 'fields' => array('phone' => 'PHONE' , 'mobile' => 'MOBILE'),) , 
+	array(),
+	'',
+	'',
+	); 	
+}
+
+
+/**
+* Private function : when somebody choice the username 
+*/
+function _clients_fromshowroom_info(){
+	if(!empty($_POST['clientid'])){
+		$clientid = _sqlInject($_POST['clientid']) ; 
+		$clientobj = _get_client_by_id($clientid) ; 
+		$clientname = _get_client_name($clientid) ; 
+		echo "<center><table id='client-info-table-details'>" ; 	
+		echo "<tr>" ; 
+			echo "<td>FULLNAME</td>" ;  
+			echo "<td>PHONE</td>" ;  
+			echo "<td>MOBILE</td>" ;
+			echo "<td>BALANCE</td>" ;  
+		echo "<tr>" ; 
+		echo "<tr>" ; 
+			echo "<td>".$clientname."</td>" ;  
+			echo "<td>".$clientobj->phone."</td>" ;  
+			echo "<td>".$clientobj->mobile."</td>" ;  
+			echo "<td>"._get_balance_of_client_id($clientobj->cid)." KWD"."</td>" ;  
+		echo "<tr>" ; 
+		
+		echo "</table></center>" ; 			
+		
+	}	
+
+}
+
+/**
+* Private function that print select input type of table name
+*/
+
+function _print_select_input_type_clients($selectname,$tablename,$fieldtosee, $valuefield, $firstlabel){
+	$result_handle = db_query("select *  from `{$tablename}` order by firstname asc") ; 
+	echo "<select name='{$selectname}' id='{$selectname}' class='joury-showroom-menu'>"	 ;
+	echo "<option value='0'>" ; 
+			echo $firstlabel ; 
+		echo "</option>" ;
+		
+	while($result = db_fetch_object($result_handle)) {
+		echo "<option value='".$result->$valuefield."'>" ; 
+			echo $result->firstname." ".$result->lastname." ".$result->phone ; 
+		echo "</option>" ;
+	}		
+	echo "</select>" ;
+}	
+
+
+/**
+* private function to get the client name
+*/
+
+function _get_client_by_id($clientid){
+	$result_handle = db_query("select * from `joury_clients` where `cid` = %d " , $clientid ) ; 
+	$result_obj = db_fetch_object($result_handle) ; 
+	if(!empty($result_obj->cid)){
+		return  $result_obj ; 
+	}else{
+		return '' ; 	
+	}	
+}	
+
+
+/**
+* Get Clint By Name
+*/
+
+function _get_clients_data_by_name($firstname , $lastname){
+	$result_handle = db_query("select * from {joury_clients} where `firstname` = '%s' and `lastname` = '%s' " ,$firstname,$lastname ) ;
+	while($result_obj = db_fetch_object($result_handle)){
+		$result[] = $result_obj ; 	
+	}
+	return $result ; 
+}
+
+
+/**
+* Get Clint By Name/id
+*/
+
+function _get_clients_data_by_name_id($firstname , $lastname,$cid){
+	$result_handle = db_query("select * from {joury_clients} where  `cid` = %d " ,$cid ) ;
+	$result_obj = db_fetch_object($result_handle) ; 
+	return $result_obj ; 
+}
+
+/**
+* get client by name and he should be regestered in service
+*/
+
+function _get_clients_data_by_name_and_register_service($firstname , $lastname){
+	$result_handle = db_query("select * from {joury_clients} where (`firstname` = '%s' and `lastname` = '%s')
+	and `cid` in (select `cid`from `joury_client_services_register`  where `status` = 0 )	
+	 " ,$firstname,$lastname ) ;
+	while($result_obj = db_fetch_object($result_handle)){
+		$result[] = $result_obj ; 	
+	}
+	return $result ; 
+}
+
+
+
+/**
+* get client by id and he should be regestered in service
+*/
+
+function _get_clients_data_by_id_and_register_service($cid){
+	$result_handle = db_query("select * from {joury_clients} where (`cid` = %d)
+	and `cid` in (select `cid`from `joury_client_services_register` where `status` = 0)	
+	 " ,$cid ) ;
+	while($result_obj = db_fetch_object($result_handle)){
+		$result[] = $result_obj ; 	
+	}
+	return $result ; 
+}
+
+
+
+/**
+* get services that this client register in
+*/
+function _get_client_services_registered($clientid){
+	$result_handle = db_query("select * from {joury_client_services_register} where `cid` =  %d" , $clientid) ;
+	while($result_obj =  db_fetch_object($result_handle)){
+		$result[] = $result_obj ; 	
+	}		
+	return $result ; 
+}	
+
+
+
+

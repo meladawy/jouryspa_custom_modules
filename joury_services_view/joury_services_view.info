@@ -1,0 +1,5 @@
+; $Id$
+name = joury services view page
+description =  view services time in rooms
+core = 6.x 
+package = joury spa

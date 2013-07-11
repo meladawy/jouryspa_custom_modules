@@ -1,0 +1,68 @@
+<?php
+// $Id$
+
+/**
+* Implementation of hook_install
+*/
+
+function joury_bill_install(){
+	drupal_install_schema('joury_bill') ; 
+}
+
+
+
+/**
+* Implementation of hook_uninstall
+*/
+
+function joury_bill_uninstall(){
+	drupal_uninstall_schema('joury_bill') ; 
+}
+
+
+/**
+* Implementation of hook_schema
+*/
+
+function joury_bill_schema(){
+	$schema['joury_bill'] = array(
+		'description' => 'this table contain bill data and information' , 
+		'fields' => array(
+			'bid' => array('type' => 'serial' , 'unsigned' => TRUE, 'not null' => TRUE,) ,
+			'type' => array('type' => 'varchar', 'length' => 40 , 'default' => '',),		
+			'clientid' => array('type' => 'int' , 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0, ) ,
+			'clientname' => array('type' => 'varchar', 'length' => 40 , 'default' => '',),
+			'productid' => array('type' => 'int' , 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0, ) ,
+			'productname' => array('type' => 'varchar', 'length' => 40 , 'default' => '',),
+			'showroomid' => array('type' => 'int' , 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0, ) ,
+			'service_rid' => array('type' => 'int' , 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0, ) ,
+			'servicename' => array('type' => 'varchar', 'length' => 40 , 'default' => '',),		
+			'cashier' => array('type' => 'varchar', 'length' => 40 , 'default' => '',),	
+			'staffid' => array('type' => 'int' , 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0, ) ,
+			'status' => array('type' => 'int' , 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0, ) ,							
+			'date' => array('type' => 'varchar', 'length' => 40 , 'default' => '',),
+			'discount' => array('type' => 'float' , 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0.0, ) ,
+			'quantity' => array('type' => 'int' , 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0, ) ,
+			'sellprice' => array('type' => 'float' , 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0.0, ) ,
+			'price' => array('type' => 'float' , 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0.0, ) ,
+			'totalprice' => array('type' => 'float' , 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0.0, ) ,
+			'by' => array('type' => 'int' , 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0, ) ,		
+		),
+		 'primary key' => array('bid'),
+	);
+
+	$schema['joury_bill_primary'] = array(
+		'description' => 'this table contain bill data and information' , 
+		'fields' => array(
+			'id' => array('type' => 'serial' , 'unsigned' => TRUE, 'not null' => TRUE,) ,
+			'cashier' => array('type' => 'varchar', 'length' => 40 , 'default' => '',),	
+			'clientid' => array('type' => 'int','length' => 40, 'default' => 0 ,),
+			'date' => array('type' => 'varchar', 'length' => 40 , 'default' => '',),
+			'bills_id' => array('type' => 'text', 'default' => '',),
+		),
+		 'primary key' => array('id'),
+	);	
+	
+	return $schema ; 
+
+}

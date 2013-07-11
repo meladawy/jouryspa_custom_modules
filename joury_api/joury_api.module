@@ -1,0 +1,170 @@
+<?php
+// $Id$
+
+
+/**
+* Implemnetation of hook_menu
+*/
+function joury_api_menu(){
+	$content = module_invoke_all('jourymenu') ; 
+	$number_of_calls = count($content) ; 
+	$number_of_calls = ($number_of_calls/6) ;
+	for($k=1 ; $k<=$number_of_calls ; $k++){	  
+	$menunameid = _range_start($k, 6) ;
+	$tablenameid = $menunameid+1 ; 
+	$fieldsarrayid = $menunameid+2 ; 
+	$searchdataid = $menunameid+3 ; 
+	$jslinkid = $menunameid+4 ; 
+	$optionsid = $menunameid+5 ; 
+	$menuname =  $content[$menunameid] ; 
+	$tablename =  $content[$tablenameid] ; 
+	$searchdata = $content[$searchdataid] ; 
+	$jslink = $content[$jslinkid] ; 
+	$options = $content[$optionsid] ; 
+
+	
+	$items['joury/'.$menuname] = array(
+		'title' => t('@title' , array('@title' => $menuname)) ,
+		'description' => t('') , 
+		'page callback' => '_joury_menu_content' ,
+		'page arguments' => array($tablename,$content[$fieldsarrayid],$searchdata,$jslink,$options),
+		'access arguments' => array('access content'),
+		'type' => MENU_NORMAL_ITEM,
+	);
+	
+	}
+	return $items ;  
+}
+
+
+function _joury_menu_content($tablename,$fieldsarray,$searchdata,$jslink,$options){		
+	return theme('joury_page_template',$tablename,$fieldsarray,$searchdata,$jslink,$options); 
+}
+
+
+function joury_api_theme(){
+	return array(
+		'joury_page_template' => array(
+			'template' => 'joury_pages_view' , 
+			'arguments' => array('tablename' => NULL , 'fieldsarray' => array(), 'searchdata' => array(), 'jslink' => '', 'options' => '',),
+		),
+	);	
+}
+
+/**
+* type:private function
+* argument: table name
+* return:number of records
+*/
+
+function _num_of_records_in_table($tablename,$condition = 1){
+	$records__number_handle = db_query("select count(*) from {$tablename} where $condition") ; 
+	$records_number_array = db_fetch_array($records__number_handle) ; 
+	return $records_number_array['count(*)'] ; 
+}
+
+
+
+/**
+* type:private function
+* argument: table name
+* return:number of records
+*/
+
+function _arrayofobject_data($tablename,$condition = 1){
+	$records_data_handle = db_query("select * from {$tablename} where $condition") ; 
+	while($records_data = db_fetch_object($records_data_handle)){
+		$data_array[] = $records_data ; 
+	} 
+	return $data_array ; 
+}
+
+
+/**
+* argument: 
+* $num: the number that we will return the range for
+* $returned_arguments_of_hook_jourymenu:the number of returned arguments for each range
+* return : sigma
+*/
+
+function _range_start($num,$returned_arguments_of_hook_jourymenu){
+ 	$num = $num-1 ; 
+ 	$num = $num*$returned_arguments_of_hook_jourymenu ; 
+ 	return $num ; 
+}	
+
+
+/**
+* this function return array of data..when somebody search for something
+*/
+
+function _get_data_with_multi_conditions($table,$fields,$input){
+	$number_of_fields = count($fields) ; 
+	$condition = '' ; 
+	for($k= 0 ; $k<$number_of_fields ; $k++){
+		if($input[$k] != '' ){
+			$condition .= $fields[$k] ; 
+			$condition .= " like '%"._sqlInject($input[$k])."%' " ; 
+			$condition .= " and " ;
+		} 
+	}	
+	$condition .= " 1 = 1 " ;
+	$search_data_handle = db_query("select * from `{$table}` where {$condition} ") ; 
+	while($search_data = db_fetch_object($search_data_handle) ) {
+		$data[] = $search_data ; 	
+	}	
+	return $data ; 
+}	
+
+
+function jouryapi_form_select(&$form_state , $optionsarray,$fieldlabel){
+	$form['selectfield-'.$fieldlabel] =  array(
+		'#type' => 'select' , 
+		'#options' => $optionsarray , 
+	) ;	
+	$form['fieldlabel'] =  array(
+		'#type' => 'hidden' , 
+		'#value' => $fieldlabel , 
+	) ;	
+	
+	$form['submit'] =  array(
+		'#type' => 'submit' , 
+		'#value' => 'GET'
+	);
+	return $form ; 
+}	
+
+function jouryapi_form_select_validate($form,$form_state){
+	$fieldlabel = $form['#post']['fieldlabel'] ;
+	$nodeid = $form['#post']['selectfield-'.$fieldlabel] ; 
+	if(empty($nodeid)){
+		form_set_error('selectfield-'.$fieldlabel, 'Please insert '.$fieldlabel) ; 
+	}
+}	
+
+
+function jouryapi_form_select_submit($form,$form_state){
+	$fieldlabel = $form['#post']['fieldlabel'] ;
+	$nodeid = $form['#post']['selectfield-'.$fieldlabel] ; 
+	drupal_goto('node/'.$nodeid) ; 
+}	
+
+/**
+* Prevent sql injection by filter input
+*/
+
+
+function _sqlInject($cek){
+  $sqlinjectionchars = array("-","*","/","'","\""," ","=","+","(",")","@","%20","%","\\");
+  
+  $filtered = '';
+  for($i = 0; $i <= strlen($cek); $i++){
+    if(!in_array(substr($cek,$i,1),$sqlinjectionchars)){
+      $filtered .= substr($cek,$i,1);
+    }       
+  }
+  for($i = 0; $i < count($sqlinjectionchars); $i++){
+      $filtered = str_replace($sqlinjectionchars[$i],"",$filtered);
+  }
+  return $filtered;
+}

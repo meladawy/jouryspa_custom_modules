@@ -1,0 +1,5 @@
+; $Id$
+name = joury bill
+description = this module enable bill page which make you able to view users bill and print the contract
+core = 6.x
+package = joury spa

@@ -1,0 +1,5 @@
+; $Id$
+name = joury supplier requests
+description = when store moderator request orders from supplier
+core = 6.x
+package = joury spa

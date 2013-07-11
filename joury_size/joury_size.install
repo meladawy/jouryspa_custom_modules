@@ -1,0 +1,37 @@
+<?php
+// $Id$
+
+/**
+* Implementation of hook_install
+*/
+function joury_size_install(){
+ 	drupal_install_schema('joury_size'); 
+}
+
+
+/**
+* Implementation of hook_uninstall
+*/
+function joury_size_uninstall(){
+ 	drupal_uninstall_schema('joury_size'); 
+}
+
+
+/**
+* Implementation of hook_schema
+*/
+function joury_size_schema(){
+	$schema['joury_size'] = array(
+		'description' => 'this table control the stores ',
+		'fields' => array(
+			'id' => array('type' => 'serial' , 'unsigned' => TRUE , 'not null' => TRUE,) , 
+			'nid' => array('type' => 'int' , 'unsigned' => TRUE , 'not null' => TRUE, 'default' => 0 , ) ,
+			'bodyname' => array('type' => 'varchar' ,'length' => 40, 'not null' => TRUE, 'default' => '' , ) ,	
+
+		), 
+		'primary key' => array('id'),
+	
+	);
+	
+	return $schema ; 
+}

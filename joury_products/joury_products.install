@@ -1,0 +1,41 @@
+<?php
+// $Id$
+
+/**
+* Implementation of hook_install
+*/
+function joury_products_install(){
+ 	drupal_install_schema('joury_products'); 
+}
+
+
+/**
+* Implementation of hook_uninstall
+*/
+function joury_products_uninstall(){
+ 	drupal_uninstall_schema('joury_products'); 
+}
+
+
+/**
+* Implementation of hook_schema
+*/
+function joury_products_schema(){
+	$schema['joury_products'] = array(
+		'description' => 'this table control the products ',
+		'fields' => array(
+			'pid' => array('type' => 'serial' , 'unsigned' => TRUE , 'not null' => TRUE,) , 
+			'nid' => array('type' => 'int' , 'unsigned' => TRUE , 'not null' => TRUE, 'default' => 0 , ) ,		
+			'name' => array('type' => 'varchar'  ,'length' => 40, 'not null' => TRUE, 'default' => '', ) ,
+			'd_qty' => array('type' => 'int' , 'unsigned' => TRUE , 'not null' => TRUE, 'default' => 0 , ) ,	
+			'rate' => array('type' => 'float' , 'unsigned' => TRUE , 'not null' => TRUE, 'default' => 0 , ) ,
+			'selling_price' => array('type' => 'float' , 'unsigned' => TRUE , 'not null' => TRUE, 'default' => 0 , ) ,
+			'suppliers' => array('type' => 'text'  , 'not null' => TRUE, 'default' => '', ) ,
+			'description' => array('type' => 'varchar'  ,'length' => 250, 'not null' => TRUE, 'default' => '', ) ,	
+		), 
+		'primary key' => array('pid'),
+	
+	);
+	
+	return $schema ; 
+}

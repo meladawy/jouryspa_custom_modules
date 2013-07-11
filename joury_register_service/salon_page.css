@@ -1,0 +1,65 @@
+#page-register-admin-table-row-head{
+border-width: 4px;
+	padding: 4px;
+	border-style: ridge;
+	border-right-width: 0px;
+	border-color: gray;
+	-moz-border-radius: ;
+	text-align: center;
+	background:gray ; 
+	color: white;
+	font-weight: bolder;
+	text-transform:uppercase;
+}	
+
+#hidden-div table{
+	width: 100%;	
+	border-width: 0px ; 
+}
+#hidden-div table td{
+	border-bottom: 1px solid #CCC;
+	padding: 0 0.5em;
+	text-align: center;
+}
+#hidden-div table td+td{
+	border-left: 1px solid #CCC;
+	text-align: center;
+}
+
+
+#hidden-div-services table{
+	width: 100%;	
+	border-width: 0px ; 
+}
+#hidden-div-services table td{
+	border-bottom: 1px solid #CCC;
+	padding: 0 0.5em;
+	text-align: center;
+}
+#hidden-div-servicestable td+td{
+	border-left: 1px solid #CCC;
+	text-align: center;
+}
+
+
+#hidden-div-services-selected {
+	width: 100%;	
+	border-width: 0px ; 
+}
+#hidden-div-services-selected td{
+	border-bottom: 1px solid #CCC;
+	padding: 0 0.5em;
+	text-align: center;
+}
+#hidden-div-services-selected td+td{
+	border-left: 1px solid #CCC;
+	text-align: center;
+}
+
+/* css for timepicker */
+.ui-timepicker-div .ui-widget-header { margin-bottom: 8px; }
+.ui-timepicker-div dl { text-align: left; }
+.ui-timepicker-div dl dt { height: 25px; }
+.ui-timepicker-div dl dd { margin: -25px 10px 10px 65px; }
+.ui-timepicker-div td { font-size: 90%; }
+.ui-tpicker-grid-label { background: none; border: none; margin: 0; padding: 0; }

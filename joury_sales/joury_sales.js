@@ -1,0 +1,99 @@
+$(document).ready(startthis);
+
+
+function startthis(){
+var frontpage = Drupal.settings.url ; 
+$("a[id=showroom]").fancybox({
+	onComplete  :   fancystarted,
+}) ; 
+$("div[id=showroom-container]").click(function(){
+index  = $("div").index(this);	
+});
+$("#joury-showroom-showrooms td:even").css("background","#131313") ;
+$("td[id=joury-showroom-showrooms-row]").mouseenter(function () {
+	$(this).css("background","#ADADAD") ;
+}); 
+$("td[id=joury-showroom-showrooms-row]:even").mouseleave(function () {
+	$(this).css("background","#131313") ;
+});
+$("td[id=joury-showroom-showrooms-row]:odd").mouseleave(function () {
+	$(this).css("background","#343434") ;
+});  
+
+function fancystarted(){
+	// make service select box a combo box	
+	window.dhx_globalImgPath = frontpage + "sites/all/modules/joury_register_service/codebase/imgs/";
+	var z=dhtmlXComboFromSelect("clientid");
+	z.enableFilteringMode(true);
+	
+	// empty input when - pressed
+	z.attachEvent("onKeyPressed", function(keyCode){
+		if(keyCode == 189){
+			z.DOMelem_input.value = "" ; 
+		}	
+	});  
+	
+	$("#sales-save").attr("disabled" , " ") ; 
+	$("input[id=dateee]").datepicker({ changeYear: true , yearRange: '2000:2018'});
+	$("input#quantity").change(function(){ // quantity have changed
+			$(this).closest("tr").attr("id","current-change-raw") ; 
+			var currentQuantity = parseInt($("#current-change-raw td").eq(2).text()) ; 
+			if($(this).val() > currentQuantity){
+				alert("Too Much Quantity !!");
+				$(this).val(currentQuantity);  	
+			}else{
+				
+			}	
+			$("#current-change-raw").removeAttr("id") ; 
+		}) ; 
+	 var sitepath = Drupal.settings.url ; 
+	z.attachEvent("onChange",function(id,index,value){ // client is selected 
+	var clientid = $("input[name=clientid]").val()  ;// current client name	
+
+	
+			if(clientid != '0'){
+				$("#sales-save").removeAttr("disabled") ; 
+			}
+			if(clientid == '0'){
+				$("#sales-save").attr("disabled" , " ") ; 
+			}
+			if($("#joury-showroom-client-green-row").length){ // remove green content if exist
+					$("#joury-showroom-client-green-row").remove(); 	
+			}				
+			if(clientid != '0' ){	
+					$("input[name=clientid]").parents('tr').after("<tr id='joury-showroom-client-green-row' ><td colspan='7'><div class='ok' id='joury-showroom-option-client-content' ></div></td></tr>");	
+					$("#joury-showroom-option-client-content").load( sitepath + "ajax/clients/from-showroom/info" , {"clientid" : clientid } ,function (clientData){
+							$(this).html('') ;  
+							$(this).html(clientData) ; 
+							$("#client-info-table-details").css("width" , "100%") ; 
+						});						
+			}	
+	});
+	$("input[id=select]").change(function () {
+    if ($(this).attr("checked")) {  //checkbox is enabled
+       $(this).parents('tr').attr('id','current-export-row') ; 
+       $("#current-export-row").addClass("message ok") ; 
+       $("#current-export-row #quantity").removeAttr("disabled") ; 
+		 $("#current-export-row #quantity").removeAttr("style") ; 
+		 $("#current-export-row").removeAttr('id') ; 
+        return;
+    }
+    // checkbox is disabled
+    
+    	 $(this).parents('tr').attr('id','current-export-row') ; 
+    	 $("#current-export-row").removeClass("message ok") ; 
+       $("#current-export-row #quantity").attr("disabled","") ; 
+		 $("#current-export-row #quantity").css("background","#BDBDBD") ; 
+		 $("#current-export-row").removeAttr('id') ; 
+		});
+		
+		$("input[id=sales-save]").click(function (){
+			var verify = confirm("are you sure ?") ;
+			if(verify == 0){
+				return false ;	
+			}	 
+		});
+		
+}	
+
+}

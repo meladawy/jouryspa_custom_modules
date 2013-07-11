@@ -1,0 +1,71 @@
+#page-store-table{
+	border-left: 1px solid #CCC;
+	font: 11px/24px Verdana, Arial, Helvetica, sans-serif;
+	border-collapse: collapse;
+	border-right: 1px solid #CCC;
+}	
+#page-store-table tr{
+	
+}
+#page-store-table td{
+	border-bottom: 1px solid #CCC;
+	padding: 0 0.5em;
+	text-align: center;
+}	
+#page-store-table td+td{
+	border-left: 1px solid #CCC;
+	text-align: center;
+}	
+#ajax-store-requests-table{
+	width: 100%;	
+	border-width: 0px ; 
+}	
+#ajax-store-requests-table td{
+	text-align: center;	
+	width: 33.3%;
+	border-width: 0px ; 
+}	
+#ajax-store-requests-table td textarea{
+	text-align: center;	
+	 width: 80%;
+}
+
+#page-store-table-row-head{
+	border-width: 4px;
+	padding: 4px;
+	border-style: ridge;
+	border-color: gray;
+	-moz-border-radius:10px ;
+	text-align: center;	
+}	
+
+#page-store-table-row-head td{
+	border-width: 4px;
+	padding: 4px;
+	border-style: ridge;
+	border-right-width: 0px;
+	border-color: gray;
+	-moz-border-radius: ;
+	text-align: center;
+	background:gray ; 
+	color: white;
+	font-weight: bolder;
+	text-transform:uppercase;
+}	
+
+#products-manager{
+
+
+}	
+
+#operation,#done{
+
+}	
+
+#page-store-table-row-head-subtable td{
+	text-align: center;
+	color: black;
+	background: #928E8E ; 
+	border: 6px solid white;
+	border-radius: 3px;
+}	

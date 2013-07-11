@@ -1,0 +1,686 @@
+<?php
+//
+
+/**
+* Implementation of hook_menu
+*/
+
+function joury_clients_attendance_menu(){
+	$menu['clients/attendance'] = array(
+		'title' => t('CLIENTS ATTENDANCE'), 
+		'description' => t('') , 
+		'page callback' => '_client_attendance_function' , 
+		'access arguments' => array('menu- client attendance'),
+		'type' => MENU_NORMAL_ITEM,
+	);  	
+	
+	$menu['clients/attendance/autocomplete/clientname'] =  array(
+		'title' => t('') , 
+		'access arguments' => array('access content') , 
+		'page callback' => 'clients_attendance_autocomplete_clientname' , 
+		'type' => MENU_CALLBACK,
+	);
+	
+	$menu['clients/attendance/autocomplete/clientphone'] =  array(
+		'title' => t('') , 
+		'access arguments' => array('access content') , 
+		'page callback' => 'clients_attendance_autocomplete_clientphone' , 
+		'type' => MENU_CALLBACK,
+	);
+	
+	$menu['clients/attendance/clientdata/result'] =  array(
+		'title' => t('') , 
+		'access arguments' => array('access content') , 
+		'page callback' => 'clients_attendance_clientdata_result' , 
+		'type' => MENU_CALLBACK,
+	) ;
+	
+	$menu['clients/attendance/clientdataphone/result'] =  array(
+		'title' => t('') , 
+		'access arguments' => array('access content') , 
+		'page callback' => 'clients_attendance_clientdataphone_result' , 
+		'type' => MENU_CALLBACK,
+	) ;
+
+
+	$menu['clients/attendance/session/fields/generator'] =  array(
+		'title' => t('') , 
+		'access arguments' => array('access content') , 
+		'page callback' => 'clients_attendance_session_fields_generator' , 
+		'type' => MENU_CALLBACK,
+	) ;	
+	
+	return $menu ; 
+}
+
+
+/**
+* Implementation of hook_perm().
+*/
+function joury_clients_attendance_perm() {
+	return array("menu- client attendance") ;  	
+}	
+
+
+/**
+* Private function for clients attendance 
+*/
+
+function _client_attendance_function(){
+	$arg2 = arg(2) ; 
+	$arg3 = arg(3) ; 
+	
+	if(empty($arg2)){
+		return theme('theme_all_clients_attendance_page') ; 
+	}
+	
+	if(!empty($arg2) && empty($arg3)){
+		return theme('theme_client_attendance_page',$arg2) ; 
+	}
+	
+	if(!empty($arg2) && !empty($arg3)){
+		return theme('theme_client_service_attendance_page',$arg2,$arg3) ; 
+	}
+	
+			
+}	
+
+
+
+/**
+* Implementation of hook_theme
+*/
+function joury_clients_attendance_theme(){
+	return array(
+		'theme_all_clients_attendance_page' => array(
+			'template' => 'page_all_clients_attendance',
+			'arguments' => array('') ,
+		),
+		'theme_client_attendance_page' => array(
+			'template' => 'page_client_attendance_page',
+			'arguments' => array('clientid' => NULL) ,
+		),		
+		'theme_client_service_attendance_page' => array(
+			'template' => 'page_client_service_attendance_page',
+			'arguments' => array('clientid' => NULL ,'registerid' => NULL ) ,
+		),	
+	);	
+}
+
+
+
+/**
+* Generate form for tmp: page_all_clients_attendance
+*/
+
+function page_all_clients_form($form_state){
+	// clients name array
+	$clientsname[''] = '' ; 
+	$result_handle = db_query("select * from {joury_clients} where `cid` in 
+	(select `cid`from `joury_client_services_register` where `status` = 0)	" ) ;
+	while($result_obj = db_fetch_object($result_handle)){
+		$clientsname[$result_obj->firstname." , ".$result_obj->lastname] = check_plain($result_obj->firstname." ".$result_obj->lastname) ; 
+	}
+	
+	// clients phone array
+	$clientsphone[''] = '' ;
+	$result_handle = db_query("select * from {joury_clients} where `cid` in 
+	(select `cid`from `joury_client_services_register` where `status` = 0 )	") ;
+	while($result_obj = db_fetch_object($result_handle)){
+		$clientsphone[$result_obj->firstname." , ".$result_obj->lastname." , ".$result_obj->cid] = check_plain($result_obj->phone) ; 
+		$clientsphone[$result_obj->firstname." , ".$result_obj->lastname." ,  ".$result_obj->cid] = check_plain($result_obj->mobile) ; 
+	}	
+	
+	
+$form['client-container'] = array(
+	'#type' => 'fieldset' , 
+	'#title' => 'CLIENTS' ,
+	'#collapsible' => TRIE , 
+); 
+	
+$form['client-container']['client-name'] = array(
+	'#type' => 'select' , 
+	'#title' => 'CLIENTS NAME' ,
+	'#description' => 'client name that you will search for' , 
+//	'#autocomplete_path' => 'clients/attendance/autocomplete/clientname' ,
+	'#options' => $clientsname , 
+); 
+
+$form['client-container']['client-phone']  =  array(
+		'#type' => 'select' , 
+		'#title' => t('CLIENT PHONE/MOBILE'),
+		'#description' => t("Insert the client phone/mobile number") , 
+		//'#autocomplete_path' => 'clients/attendance/autocomplete/clientphone',
+		'#options' => $clientsphone , 
+) ; 
+
+$form['client-container']['hidden-div']  =  array(
+		'#type' => 'markup' , 
+		'#value' => "<div id='hidden-div'></div>",
+	) ; 
+
+$form['client-container']['submit'] = array(
+	'#type' => 'submit' , 
+	'#value' => 'GET' ,
+); 
+		
+return $form ; 	
+}	
+
+/**
+* submit of the form that for tmp: page_all_clients_attendance
+*/
+function page_all_clients_form_submit($form , $form_state){
+if(!empty($form['#post']['client-id'])){
+	$url = "clients/attendance/" ; 
+	$clientid = $form['#post']['client-id'] ; 
+	$userlink = $url.$clientid  ; 
+	drupal_goto($userlink) ; 
+}else{
+	drupal_set_message("<div class='message error'><center>Are you sure you have selected the user from radio button ?</center></div>") ; 	
+}	
+}
+
+
+/**
+* client service session page
+*/
+function client_service_sessions_form($form_state,$sessions_number,$registerid){
+	for($k=0 ;  $k<=$sessions_number ; $k++){
+		$options[$k] = $k ; 		
+	}
+	$service = 	_get_data_of_clientid_and_registerid($registerid) ;
+	$form['sessions-container'] = array(
+		'#title' => t('SESSION INFO') ,
+		'#type' => 'fieldset' , 
+		'#attributes' => array() , 
+		'#collapsible' => TRUE ,  
+	);
+	
+	$form['sessions-container']['room'] = array(
+		'#title' => t('') ,
+		'#type' => 'markup' , 
+		'#value' => "<strong>ROOM NAME :".$service->room."</strong><br/><strong>BY:".$service->by."</strong>",
+
+	);
+	
+	$form['sessions-container']['session'] = array(
+		'#title' => t('SESSION NUMBER') ,
+		'#type' => 'select' , 
+		'#required' => TRUE ,  
+		'#options' => $options ,
+	);
+	$form['sessions-container']['hidden-div'] = array(
+		'#type' => 'markup' , 
+		'#value' => "<div id='hidden-div'> </div>" , 
+	);
+	$form['sessions-container']['register-id'] = array(
+		'#type' => 'hidden' , 
+		'#value' => $registerid , 
+	);
+	
+	
+	$form['sessions-container']['submit'] = array(
+	'#type' => 'submit' , 
+	'#value' => 'SAVE' ,
+	); 
+	$form['sessions-container']['close'] = array(
+	'#type' => 'checkbox' , 
+	'#title' => t('CLOSE THIS SERVICE') ,
+	'#description' => t('if you want to mark this service as successfuly done...it will not appear in user service list') , 
+	
+	); 
+	return $form ; 
+}	
+
+
+/**
+*
+*/
+function client_service_sessions_form_submit($form,$form_state){
+	$session = $form['#post']['session'] ; 
+	$registerid  = $form['#post']['register-id'] ; 
+	$selected =  $form['#post']['select'] ; 
+	$date = $form['#post']['date'] ; 
+	$close = $form['#post']['close'] ;
+	$by = $form['#post']['by'] ;
+	$room = !empty($form['#post']['room']) ? $form['#post']['room'] : 'NOT SELECTED'  ;
+	$attend = ($form['#post']['attend'] == 'on') ? 1 : 0 ; 
+	if(!empty($session) && !empty($registerid) && empty($selected)){
+		db_query("delete from {joury_clients_attendance_size} where `rid` =  %d and `session` = %d" ,$registerid,$session) ; 
+		db_query("delete from {joury_clients_attendance_date} where `rid` =  %d and `session` = %d" ,$registerid,$session) ; 
+		drupal_set_message("<div class='message ok' > <center>SUCCESSFULY DELETED..</center> </div>")	 ;
+		return ; 
+	}
+	
+	db_query("delete from {joury_clients_attendance_size} where `rid` =  %d and `session` = %d" ,$registerid,$session) ; 
+	db_query("delete from {joury_clients_attendance_date} where `rid` =  %d and `session` = %d" ,$registerid,$session) ; 
+	
+	foreach($form['#post'] as $key => $val){
+		if(substr($key,0,7) == 'column-'){
+			$column_size_nid[] = substr($key,7,2522) ; 
+			$column_size_value[] = $val ; 	
+		}		
+	}
+	
+	$number_of_columns = count($column_size_nid) ; 
+	
+	for($k=0 ; $k<$number_of_columns ; $k++){
+		$column_nid = $column_size_nid[$k] ; 
+		$value = $column_size_value[$k] ; 
+		if(!empty($value)){
+			db_query("insert into {joury_clients_attendance_size} (`rid`,`session`,`column_size_nid`,`column_size_value`) 
+			values (%d,%d,'%s','%s') ",$registerid,$session,$column_nid,$value) ; 	
+		}	
+	}
+	
+		if(!empty($date)){
+			db_query("insert into {joury_clients_attendance_date} (`rid`,`session`,`date`,`attend`,`by`,`room`) 
+			values (%d,%d,'%s',%d,'%s','%s') ",$registerid,$session,$date,$attend,$by,$room) ; 
+		}
+		
+		if(empty($close)){
+			$close = 0 ;	
+		}else{
+			$cloase = 1; 	
+			db_query("update {joury_client_services_register}  set `status` = 1 where `id` = %d" , $registerid) ; 
+			drupal_goto('clients/attendance') ; 
+		}			
+		
+		drupal_set_message("<div class='message ok' > <center>SAVED</center> </div>")	 ;
+	
+}	
+
+
+
+/**
+* Client name autocomplete function 
+*/
+function clients_attendance_autocomplete_clientname($keyword){
+	$result_handle = db_query("select * from {joury_clients} where `cid` in 
+	(select `cid`from `joury_client_services_register` where `status` = 0)	
+	and (`firstname` like '%%%s%%' or `lastname` like '%%%s%%') " ,$keyword, $keyword) ;
+	while($result_obj = db_fetch_object($result_handle)){
+		$result[$result_obj->firstname." , ".$result_obj->lastname] = check_plain($result_obj->firstname." ".$result_obj->lastname) ; 
+	}
+	print drupal_to_js($result)  ; 
+	exit() ; 
+}
+
+
+
+
+/**
+* Client name autocomplete function 
+*/
+function clients_attendance_autocomplete_clientphone($keyword){
+	$result_handle = db_query("select * from {joury_clients} where `cid` in 
+	(select `cid`from `joury_client_services_register` where `status` = 0 )	
+	and (`phone` like '%%%s%%' or `mobile` like '%%%s%%') " ,$keyword, $keyword) ;
+	while($result_obj = db_fetch_object($result_handle)){
+		$result[$result_obj->firstname." , ".$result_obj->lastname." , ".$result_obj->cid] = check_plain($result_obj->firstname." ".$result_obj->lastname) ; 
+	}
+	print drupal_to_js($result)  ; 
+	exit() ; 
+}
+
+/**
+* used in ajax to get data about this user
+*/
+
+function clients_attendance_clientdata_result(){
+		if($_POST['clientname']){
+		$clientfullname = $_POST['clientname'] ;
+		$clientnamesarray = explode(" , ", $clientfullname);
+		if(count($clientnamesarray) == 2){
+			$firstname = $clientnamesarray[0] ;
+			$lastname = $clientnamesarray[1] ;
+			$clients = _get_clients_data_by_name_and_register_service($firstname , $lastname) ;
+			$number_of_clients  =  count($clients) ; 
+			if($number_of_clients > 0){
+				echo "<table>" ; 
+				echo "<tr id='page-register-admin-table-row-head' >" ;
+					echo "<td>" ;
+						echo "FULLNAME" ; 
+					echo "</td>" ; 
+					
+					echo "<td id='page-register-admin-table-row-head' >" ;
+						echo "PHONE" ; 					
+					echo "</td>" ; 	
+						
+					echo "<td id='page-register-admin-table-row-head' >" ;
+						echo "BIRTHDATE" ; 										
+					echo "</td>" ; 	
+					
+					echo "<td id='page-register-admin-table-row-head' >" ;
+						echo "SELECT" ; 										
+					echo "</td>" ; 							
+				echo "</tr>" ; 
+				for($k=0 ; $k< $number_of_clients ; $k++){
+					echo "<tr>" ; 
+						echo "<td>" ; 
+							echo $clients[$k]->firstname." ".$clients[$k]->lastname ; 
+ 						echo "</td>" ; 
+						
+						echo "<td>" ; 
+							echo $clients[$k]->phone ; 
+						echo "</td>" ; 
+						
+						echo "<td>" ; 
+							echo $clients[$k]->birthdate ; 
+						echo "</td>" ; 
+						
+						echo "<td>" ; 
+							echo "<input type='radio' value='".$clients[$k]->cid."' name='client-id' />" ; 
+						echo "</td>" ; 
+					echo "</tr>" ; 
+				}	
+				echo "</table>" ; 
+			}
+		}	
+	}	
+}	
+
+
+/**
+* used in ajax to get data about this user
+*/
+
+function clients_attendance_clientdataphone_result(){
+		if($_POST['clientdata']){
+		$clientdata = $_POST['clientdata'] ;
+		$clientdataarray = explode(" , ", $clientdata);
+		if(count($clientdataarray) == 3){
+			$firstname = $clientdataarray[0] ;
+			$lastname = $clientdataarray[1] ;
+			$cid = $clientdataarray[2] ;
+			$clients = _get_clients_data_by_id_and_register_service($cid) ;
+			$number_of_clients  =  count($clients) ; 
+			if($number_of_clients > 0){
+				echo "<table>" ; 
+				echo "<tr id='page-register-admin-table-row-head' >" ;
+					echo "<td>" ;
+						echo "FULLNAME" ; 
+					echo "</td>" ; 
+					
+					echo "<td id='page-register-admin-table-row-head' >" ;
+						echo "PHONE" ; 					
+					echo "</td>" ; 	
+						
+					echo "<td id='page-register-admin-table-row-head' >" ;
+						echo "BIRTHDATE" ; 										
+					echo "</td>" ; 	
+					
+					echo "<td id='page-register-admin-table-row-head' >" ;
+						echo "SELECT" ; 										
+					echo "</td>" ; 							
+				echo "</tr>" ; 
+				for($k=0 ; $k< $number_of_clients ; $k++){
+					echo "<tr>" ; 
+						echo "<td>" ; 
+							echo $clients[$k]->firstname." ".$clients[$k]->lastname ; 
+ 						echo "</td>" ; 
+						
+						echo "<td>" ; 
+							echo $clients[$k]->phone ; 
+						echo "</td>" ; 
+						
+						echo "<td>" ; 
+							echo $clients[$k]->birthdate ; 
+						echo "</td>" ; 
+						
+						echo "<td>" ; 
+							echo "<input type='radio' value='".$clients[$k]->cid."' name='client-id' checked=''/>" ; 
+						echo "</td>" ; 
+					echo "</tr>" ; 
+				}	
+				echo "</table>" ; 
+			}
+		}	
+	}	
+}	
+
+
+
+
+
+
+/**
+* Generate session fields
+*/
+function clients_attendance_session_fields_generator(){
+	if(!empty($_POST['registerid']) && !empty($_POST['session']) ){
+		$registerid 	= $_POST['registerid'] ; 
+		$session 		= $_POST['session'] ; 
+		$register_data =  _get_data_of_clientid_and_registerid($registerid) ; 	
+		$serviceid		= $register_data->sid ; 
+		$service  		= _get_service_by_id($serviceid) ; 
+		$date = _get_date_value($session,$registerid) ; 
+		$attend = _get_attend_value($session,$registerid) ; 
+		$by = _get_by_value($session,$registerid) ; 
+		$by = !empty($by) ? $by : $register_data->by ; 
+		$room =  _get_room_value($session,$registerid) ; 
+		$room = !empty($room) ? $room : $register_data->room ; 
+		$attendance_tag_value = ($attend == 1) ? " checked = '' " : "" ; 
+		$service_size_array  = explode(" , ", $service->size_nid);
+		foreach($service_size_array as $key => $val){
+			if(!empty($val)){
+				$size_node = node_load($val) ; 
+				$size[] = $size_node->title ; 
+				$size_nid[]  =  $size_node->nid ; 
+			}		
+		}
+		
+		$number_of_size_fields = count($size) ; 
+		echo "<table id='session-table'  >" ;
+			// head row
+			echo "<tr>" ; 
+				echo "<td id='page-register-admin-table-row-head'>" ; 
+					echo "ENABLE" ; 
+				echo "</td>" ;
+				echo "<td id='page-register-admin-table-row-head'>" ; 
+					echo "DATE" ; 
+				echo "</td>" ; 
+			for($k=0 ; $k<$number_of_size_fields ; $k++){
+				echo "<td id='page-register-admin-table-row-head'>" ; 
+					echo strtoupper($size[$k]) ; 
+				echo "</td>"	;	
+			}	
+				echo "<td id='page-register-admin-table-row-head'>" ; 
+					echo "BY" ; 
+				echo "</td>" ; 
+				
+				echo "<td id='page-register-admin-table-row-head'>" ; 
+					echo "ROOM" ; 
+				echo "</td>" ; 
+				
+				echo "<td id='page-register-admin-table-row-head'>" ; 
+					echo "ATTEND" ; 
+				echo "</td>" ; 
+			echo "</tr>" ; 
+			
+			
+			  // number of columns
+			
+			// value row
+			echo "<tr>" ; 
+				echo "<td>" ;
+					if(!empty($date)){
+						echo "<input type='checkbox' name='select' id='select' checked = '' />" ; 
+					}else{
+						echo "<input type='checkbox' name='select' id='select' />" ; 
+						}
+				echo "</td>" ;
+				echo "<td>" ; 
+					echo "<input type='text' size='10' name='date' id='date' value='".$date."'/>" ; 
+				echo "</td>" ; 
+			for($k=0 ; $k<$number_of_size_fields ; $k++){
+				echo "<td>" ; 
+				  $column_value = _get_column_value($size_nid[$k],$session,$registerid) ;
+					echo "<input type='text' size='10' name='column-".$size_nid[$k]."' id='column-nid' value='".$column_value."'/>" ; 
+				echo "</td>"	;	
+			}	
+							
+							
+				echo "<td >" ; 
+					echo "<input type='text' size='10' name='by' id='by' value='".$by."' />" ; 
+				echo "</td>" ; 
+				
+				echo "<td >" ; 
+					echo "<select name='room' >" ; 
+					$result_handle = db_query("select * from {joury_rooms}") ; 
+					while($result_obj = db_fetch_object($result_handle)){
+							if($room == $result_obj->roomname){
+								echo "<option  value='$room'  selected=''>".$room."</option>" ; 	
+							}else{
+								echo "<option  value='".$result_obj->roomname."' >".$result_obj->roomname."</option>" ;
+							}		
+					}	
+					echo "</select>"  ;
+				echo "</td>" ; 
+											
+				echo "<td>" ; 
+					echo "<input type='checkbox' name='attend' id='attend' ".$attendance_tag_value." />" ; 
+				echo "</td>" ; 
+			
+			echo "</tr>" ; 			
+			
+			
+		
+		echo "</table>" ;
+		
+	}	
+}	
+
+
+/**
+* get services that user had registered in
+*/
+function _get_services_of_client_id($clientid){
+		$result_handle = db_query("select * from {joury_client_services_register} where `cid` = %d and `status` = 0" , $clientid);
+		while($result_obj = db_fetch_object($result_handle)){
+			$result[] =  $result_obj ; 	
+		}
+		
+		return $result ; 
+}
+
+
+
+
+/**
+* get service full information that user had registered in
+*/
+function _get_data_of_clientid_and_registerid($registerid){
+		$result_handle = db_query("select * from {joury_client_services_register} where `id` = %d" ,$registerid);
+		$result_obj = db_fetch_object($result_handle) ; 
+		return $result_obj; 
+}
+
+
+
+/**
+* get column value
+*/
+function _get_column_value($nid,$session,$registerid){
+	$result_handle = db_query("select `column_size_value` from {joury_clients_attendance_size} where `column_size_nid` = %d and 
+	 `session` = %d and `rid` = %d  " ,$nid,$session,$registerid ) ;
+	 $result_obj = db_fetch_object($result_handle) ; 
+	 $value = $result_obj->column_size_value ; 
+	 if(empty($value)){
+	 	return '' ; 
+	 }
+	 return $value ; 		
+}
+
+
+/**
+* get data 
+*/
+function _get_date_value($session,$registerid) {
+	$result_handle = db_query("select `date` from {joury_clients_attendance_date} where  
+	 `session` = %d and `rid` = %d  " ,$session,$registerid ) ;
+	 $result_obj = db_fetch_object($result_handle) ; 
+	 $value = $result_obj->date ; 
+	 if(empty($value)){
+	 	return '' ; 
+	 }
+	 return $value ; 	
+}
+
+
+/**
+* get session staff 
+*/
+function _get_by_value($session,$registerid) {
+	$result_handle = db_query("select `by` from {joury_clients_attendance_date} where  
+	 `session` = %d and `rid` = %d  " ,$session,$registerid ) ;
+	 $result_obj = db_fetch_object($result_handle) ; 
+	 $value = $result_obj->by ; 
+	 if(empty($value)){
+	 	return '' ; 
+	 }
+	 return $value ; 	
+}
+
+
+/**
+* get session room 
+*/
+function _get_room_value($session,$registerid) {
+	$result_handle = db_query("select `room` from {joury_clients_attendance_date} where  
+	 `session` = %d and `rid` = %d  " ,$session,$registerid ) ;
+	 $result_obj = db_fetch_object($result_handle) ; 
+	 $value = $result_obj->room ; 
+	 if(empty($value)){
+	 	return '' ; 
+	 }
+	 return $value ; 	
+}
+
+
+/**
+* get attend 
+*/
+function _get_attend_value($session,$registerid) {
+	$result_handle = db_query("select `attend` from {joury_clients_attendance_date} where  
+	 `session` = %d and `rid` = %d  " ,$session,$registerid ) ;
+	 $result_obj = db_fetch_object($result_handle) ; 
+	 $value = $result_obj->attend ; 
+	 if(empty($value)){
+	 	return '' ; 
+	 }
+	 return $value ; 	
+}
+
+/**
+* get sessions of register id 
+*/
+function _get_sessions_of_registerid($registerid){
+	$result_handle = db_query("select session from {joury_clients_attendance_date} where `rid` = %d group by session " ,$registerid ) ; 
+	while($result_obj = db_fetch_object($result_handle)){
+		$sessions[] = $result_obj->session ;
+	}	
+	return $sessions ; 
+}	
+
+/**
+* Get date of session id
+*/
+
+function  _get_date_of_sessionid($session ,$registerid){
+	$result_handle = db_query("select `date` from {joury_clients_attendance_date} where `rid` = %d  and `session` = %d " ,$registerid,$session) ; 
+	$result_obj = db_fetch_object($result_handle) ; 
+	return $result_obj->date  ; 	
+}	
+
+
+/**
+* Get attend of session id
+*/
+
+function  _get_attend_of_sessionid($session ,$registerid){
+	$result_handle = db_query("select `attend` from {joury_clients_attendance_date} where `rid` = %d  and `session` = %d " ,$registerid,$session) ; 
+	$result_obj = db_fetch_object($result_handle) ; 
+	return $result_obj->attend  ; 	
+}	

@@ -1,0 +1,157 @@
+<?php
+// $Id$
+$current_module_path = drupal_get_path('module' , 'joury_bill') ; 
+$siteurl = url('', array('absolute' => TRUE)) ; 
+drupal_add_js($current_module_path."/jquery-1.4.3.min.js") ;
+drupal_add_js($current_module_path."/fancybox/jquery.mousewheel-3.0.4.pack.js") ;
+drupal_add_js($current_module_path."/fancybox/jquery.fancybox-1.3.4.pack.js") ;
+drupal_add_js($current_module_path."/js/jquery-ui-1.8.14.custom.min.js") ;
+drupal_add_css($current_module_path."/smoothness/jquery-ui-1.8.14.custom.css") ;
+drupal_add_css($current_module_path."/fancybox/jquery.fancybox-1.3.4.css") ;
+drupal_add_css($current_module_path."/jourybill.css") ;
+drupal_add_css($current_module_path."/jourybill.css" , $type = 'module', $media = 'screen') ; 
+$printimg_url = url($current_module_path."/print.gif", array('absoluter' => TRUE)) ;  
+drupal_add_js($current_module_path."/jquery.printElement.js") ;
+drupal_add_js($current_module_path."/joury_bill_process.js") ;
+drupal_add_js(array('url' => $siteurl) , 'setting'  ); 
+
+
+	$discount  = !empty($_POST['discount']) ? $_POST['discount'] : 0 ; 
+	$clientid = !empty($_POST['clientid']) ? $_POST['clientid'] : 0 ; 
+	$staffid = !empty($_POST['staffid']) ? $_POST['staffid'] : 0 ; 
+	$allprice = 0 ; 
+	$clientdata = _get_client_bill_data($clientid) ; 
+	$clientname = _get_client_name($clientid) ; 
+	$timestamp = time() ; 
+	$currentdata = date(" m/d/Y h:i a") ; 
+	global $user  ; 
+	$cashier = $user->uid ; 
+	$shopname = @variable_get('site_name') ; 
+	$bils_id = '' ; 
+	for($k=0 ; $k < count($clientdata) ; $k++){
+			$totalprice =  $clientdata[$k]->totalprice ; 
+			$price_after_discount = $totalprice - (($totalprice/100) * $discount ) ; 
+			db_query("update `joury_bill` set `cashier` = '%s', `staffid` = %d,`clientid` = %d,`discount`= %f , `totalprice` = %f  where `clientid` = %d and `productid` = %d  and `bid` =  %d" ,
+			$cashier, $staffid , $clientid ,$discount,$price_after_discount,$clientid,$clientdata[$k]->productid, $clientdata[$k]->bid) ; 
+			$bils_id .= 	" , ".$clientdata[$k]->bid ; 
+	}
+	$bils_id .= " , " ;
+	
+	db_query("insert into {joury_bill_primary} (`cashier` , `date` , `bills_id`,`clientid`) values ('%s' , '%s' , '%s' ,%d) " ,$user->name , $currentdata , $bils_id,$clientid ) ; 
+	$last_id	= db_last_insert_id('joury_bill_primary' , 'id') ;
+	
+	$clientdata = _get_client_bill_data($clientid) ; 
+	echo "<center><table id='ajax-bill-client2'  cellspacing='10'>" ; 
+	
+	echo "<tr>";
+		echo "<td id='print-row'>" ; 
+			echo "<a href='#' id='printer-link' ><img src='$printimg_url' width='30'/></a>" ; 
+		echo "</td>" ; 	
+	echo "</tr>" ;	
+	
+	echo "<tr>" ; 
+		echo "<td colspan='2' style='text-align:center;'></td>" ; 
+		echo "<td colspan='2' style='text-align:center;'>".$currentdata."</td>" ; 
+	echo "</tr>" ;	
+	
+	echo "<tr>" ; 
+		echo "<td colspan='4' style='text-align:center;'><strong>".$shopname."</strong></td>" ; 
+	echo "</tr>" ;	
+		
+	echo "<tr>" ; 
+			echo "<td colspan='4' style='text-align:center;'>".KUWAIT."</td>" ; 
+	echo "</tr>" ;			
+	
+	echo "<tr>" ; 
+			for($k=0 ; $k < count($clientdata) ; $k++){			
+				$bid[] = $clientdata[$k]->bid  ;
+			}
+			echo "<td colspan='2' style='text-align:left;'>".substr($currentdata,0,12)."</td>" ; 
+
+			if(count($bid)>0){
+				
+				echo "<td colspan='2' style='text-align:right;'><strong>Reciept:</strong>" ;
+				echo $last_id;
+			}
+			echo  "</td>" ; 
+	echo "</tr>" ;		
+	
+		echo "<tr>" ; 
+			echo "<td colspan='2' style='text-align:left;'>".substr($currentdata,12,3242)."</td>" ; 
+			$cashier_data = user_load($clientdata[0]->cashier)  ; 
+			$center_name  = $cashier_data->centerdetails ; 
+			echo "<td colspan='2' style='text-align:right;'><strong>Store:</strong>".$center_name."</td>" ; 
+			
+	echo "</tr>" ;		
+	
+	echo "<tr>" ; 
+			echo "<td colspan='2' style='text-align:center;'></td>" ; 
+			echo "<td colspan='2' style='text-align:right;'><strong>Cashier: </strong>".$user->uid."</td>" ; 
+	echo "</tr>" ;		
+	
+	echo "<tr>" ; 
+	
+			echo "<td colspan='4' style='text-align:left;'><strong>Bill to: </strong>".$clientname."</td>" ; 
+
+	echo "</tr>" ;		
+	
+	
+	echo "<tr>" ; 
+		echo "<td id='label-text' style='text-align:center;'> ITEM </td>" ; 
+		echo "<td id='label-text' style='text-align:center;'> QTY </td>" ; 
+		echo "<td id='label-text' style='text-align:center;'> UNIT PRICE </td>" ; 
+		echo "<td id='label-text' style='text-align:center;'> TOTAL </td>" ; 
+	echo "</tr>" ;	 
+	for($k=0 ; $k < count($clientdata) ; $k++){
+		
+	if($clientdata[$k]->type == 'product'){
+		$itemname = "<strong>PRODUCT: </strong> ".$clientdata[$k]->productname ; 	
+	}elseif($clientdata[$k]->type == 'DEBT'){
+		$itemname = "<strong>DEBT: </strong> ".$clientdata[$k]->servicename ; 
+	}else{
+		$itemname = "<strong>SERVICE: </strong> ".$clientdata[$k]->servicename ; 
+	}			
+		
+		
+		
+	echo "<tr>" ; 
+		echo "<td style='text-align:center;'>".$itemname."</td>" ; 
+		echo "<td style='text-align:center;'>".$clientdata[$k]->quantity."</td>" ; 
+		echo "<td style='text-align:center;'>".$clientdata[$k]->sellprice."</td>" ; 
+		echo "<td style='text-align:center;'>".$clientdata[$k]->totalprice."</td>" ; 
+		echo "<input type='hidden' name='showroomid' id='showroomid' value='".$clientdata[$k]->showroomid."' />" ;
+		echo "<input type='hidden' name='quantity' id='quantity' value='".$clientdata[$k]->quantity."' />" ;
+		echo "<input type='hidden' name='productid' id='productid' value='".$clientdata[$k]->productid."' />" ;
+	echo "</tr>" ;
+	$allprice += $clientdata[$k]->totalprice ; 
+	db_query("update `joury_bill` set `status` = 1 where `clientid` = %d and `productid` = %d and `date` = '%s' and `bid` = %d" , $clientdata[$k]->clientid,$clientdata[$k]->productid,$clientdata[$k]->date, $clientdata[$k]->bid ) ; 
+	}
+	echo "<tr>" ; 
+		echo "<td colspan='4' ></td>" ; 
+	echo "</tr>" ;	
+	echo "<tr>" ; 
+		echo "<td >-</td>" ; 
+		echo "<td >-</td>" ; 
+		echo "<td ><strong>TOTAL PRICE: </strong></td>" ; 
+		echo "<td >".$allprice." <strong>KWD</strong> </td>" ; 
+	echo "</tr>" ;	
+	if($discount != 0 ){		
+		echo "<tr>" ; 
+		echo "<td colspan='4'><strong>DISCOUNT:" ; 
+		echo $discount ; 
+		echo " % </td>" ; 
+	/*	echo "<td colspan='2'><strong>FOLLOWER:</strong>" ;
+		echo $clientdata[$k]->staffid ; 
+		echo "</td>"  ; */
+		}
+	echo "</tr>" ;	
+//	echo "<tr>" ; 
+	//	echo "<td colspan='2' ><input type='submit' name='deletetransaction' id='deletetransaction' value='FINISH' /></td>" ; 
+	//	echo "<td colspan='4' ><input type='submit' name='print' id='print' value='PRINT' /></td>" ; 
+//	echo "</tr>" ;	
+	
+	echo "<input type='hidden' name='clientid' id='clientid' value='{$clientid}' />" ; 
+	echo "<input type='hidden' name='cashier' id='cashier' value='{$cashier}' />" ; 	
+	echo "<input type='hidden' name='allprice' id='allprice' value='{$allprice}' />" ; 
+	echo "</table></center>" ; 
+	

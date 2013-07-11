@@ -1,0 +1,5 @@
+;$Id$
+name = joury rooms
+description = control the vailable rooms
+core = 6.x
+package = joury spa

@@ -1,0 +1,73 @@
+#page-store-admin-table{
+	width: 100% ;
+	border-left: 1px solid #CCC;
+	font: 11px/24px Verdana, Arial, Helvetica, sans-serif;
+	border-collapse: collapse;
+	border-right: 1px solid #CCC;
+}	
+#page-store-admin-table tr{
+	
+}
+#page-store-admin-table td{
+	width: 14% ; 
+	border-bottom: 1px solid #CCC;
+	padding: 0 0.5em;
+	text-align: center;
+}	
+#page-store-admin-table td+td{
+	border-left: 1px solid #CCC;
+	text-align: center;
+}	
+
+#page-store-admin-table-row-head{
+	border-width: 4px;
+	padding: 4px;
+	border-style: ridge;
+	border-color: gray;
+	-moz-border-radius:10px ;
+	text-align: center;	
+}	
+
+#page-store-admin-table-row-head td{
+	border-width: 4px;
+	padding: 4px;
+	border-style: ridge;
+	border-right-width: 0px;
+	border-color: gray;
+	-moz-border-radius: ;
+	text-align: center;
+	background:gray ; 
+	color: white;
+	font-weight: bolder;
+	text-transform:uppercase;
+}	
+
+#joury-admin-changable-table{
+	width: 100%;
+	border-left: 1px solid #CCC;
+	font: 11px/24px Verdana, Arial, Helvetica, sans-serif;
+	border-collapse: collapse;
+	border-right: 1px solid #CCC;
+}
+#joury-admin-changable-table td{
+	width: 14% ; 
+	border-bottom: 1px solid #CCC;
+	padding: 0 0.5em;
+	text-align: center;
+}
+#joury-admin-changable-table td+td{
+	border-left: 1px solid #CCC;
+	text-align: center;
+}	
+
+#dynamic-table-content{
+display: none;	
+text-align: center;
+}	
+
+#dynamic-table-content tr{
+text-align: center;
+}
+#dynamic-table-content td{
+text-align: center;
+}

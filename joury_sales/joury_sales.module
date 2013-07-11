@@ -1,0 +1,185 @@
+<?php
+// $Id$
+
+
+
+
+
+/**
+* Implementation of hook_menu
+*/
+
+function joury_sales_menu(){
+	
+$items['joury/sales/showroom'] = array(
+		'title' => t('SHOWROOM') , 
+		'description' => t('') , 
+		'access arguments' => array('menu- sales showroom') ,
+		'page callback' => '_joury_sales_showroom' ,   
+		'type' => MENU_NORMAL_ITEM , 
+
+);
+$items['joury/sales/returned/products'] = array(
+		'title' => t('RETURN PRODUCT') , 
+		'description' => t('') , 
+		'access arguments' => array('menu- return product') ,
+		'page callback' => '_joury_sales_returned_products' ,   
+		'type' => MENU_NORMAL_ITEM , 
+
+);
+$items['joury/sales/returned/products/table'] = array(
+		'title' => t('') , 
+		'description' => t('') , 
+		'access arguments' => array('access content') ,
+		'page callback' => '_joury_sales_returned_products_table' ,   
+		'type' => MENU_CALLBACK , 
+
+);
+
+$items['ajax/sales/showroom/products/%'] =  array(
+		'title' => t('') , 
+		'description' => t('') , 
+		'access arguments' => array('access content') ,
+		'page callback' => '_ajax_joury_sales_showroom' ,   
+		'type' => MENU_CALLBACK , 
+);	
+	return $items ; 	
+	
+}	
+
+/**
+* Implementation of hook_perm
+*/
+function joury_sales_perm(){
+	return array("menu- sales showroom", "menu- return product");	
+}	
+
+
+/**
+* this function control return products functionality  joury/sales/returned/products
+*/ 
+function _joury_sales_returned_products(){
+	return theme('sales_returned_products') ; 	
+}	
+
+
+/**
+* generate the table for /joury/sales/returned/products/table
+*/
+function _joury_sales_returned_products_table(){
+	if(!empty($_POST['date']) && !empty($_POST['clientid'])){
+		$date = 	$_POST['date'] ; 
+		$clientid = $_POST['clientid'] ; 
+		$result_handle  = db_query("select * from `joury_bill` where clientid = %d and date like '%%%s%%' " ,$clientid,$date ) ;
+		while($result_obj = db_fetch_object($result_handle)){
+			$result_arr[] = $result_obj ; 	
+		}	 
+		if(empty($result_arr)){
+		echo "<div class='message error'> no order for this user at this time</div>"; 	
+		return ; 	
+		}	
+		$posturl = url('joury/sales/returned/products' , array('absolute' => TRUE)) ; 
+		$result_count = count($result_arr) ; 
+		echo "<form method='POST' action='{$posturl}'><center><table id='joury-return-product-table'>" ;
+			echo 	"<tr>" ; 
+				echo "<td id='return-product-table-head'>" ; 
+					echo "PRODUCT NAME" ; 
+				echo "</td>" ;
+				echo "<td id='return-product-table-head'>" ; 
+					echo "QUANTITY" ; 
+				echo "</td>" ;
+				echo "<td id='return-product-table-head'>" ; 
+					echo "ITEM PRICE" ; 
+				echo "</td>" ;
+				echo "<td id='return-product-table-head'>" ; 
+					echo "RETURN QUANTITY" ; 
+				echo "</td>" ;
+				echo "<td id='return-product-table-head'>" ; 
+					echo "STATUS" ; 
+				echo "</td>" ;
+				echo "<td id='return-product-table-head'>" ; 
+					echo "SELECT" ; 
+				echo "</td>" ;
+			echo "</tr>" ; 
+		for($k=0 ; $k<$result_count ; $k++){
+			echo 	"<tr>" ; 
+				echo "<td>" ; 
+					echo $result_arr[$k]->productname ;
+				echo "</td>" ;
+				echo "<td>" ; 
+					echo $result_arr[$k]->quantity ;
+				echo "</td>" ;
+				echo "<td>" ; 
+					echo $result_arr[$k]->sellprice ;
+				echo "</td>" ;
+				echo "<td>" ; 
+					echo "<input type='text' size='5'  name='quantity-".$result_arr[$k]->productid."' id='quantity' value='".$result_arr[$k]->quantity."' disabled='' />" ;
+				echo "</td>" ;
+				echo "<td>" ; 
+					if($result_arr[$k]->status == 1){
+						echo "DONE" ;	
+					}else{
+						echo "WAINING" ; 	
+					}		 
+				echo "</td>" ;
+				echo "<td>" ;
+					echo "<input type='checkbox' id='select' name='select-".$result_arr[$k]->productid."' />";
+				echo "</td>" ; 
+				echo "<input type='hidden' id='showroomid' name='showroomid-".$result_arr[$k]->productid."' value='".$result_arr[$k]->showroomid."' />" ; 
+				echo "<input type='hidden' id='price' name='price-".$result_arr[$k]->productid."' value='".$result_arr[$k]->price."' />" ; 
+				echo "<input type='hidden' id='exist-quantity' name='exist-quantity-".$result_arr[$k]->productid."' value='".$result_arr[$k]->quantity."' />" ; 
+				echo "<input type='hidden' id='sellprice' name='sellprice-".$result_arr[$k]->productid."' value='".$result_arr[$k]->sellprice."' />" ; 				
+				echo "<input type='hidden' id='status' name='status-".$result_arr[$k]->productid."' value='".$result_arr[$k]->status."' />" ; 				
+			echo "</tr>" ; 
+		}
+			echo "<input type='hidden' name='date' value='{$date}' />" ; 
+			echo "<input type='hidden' name='clientid' value='{$clientid}' />" ;   
+			echo "<tr>" ;
+				echo "<td colspan = '6'>" ; 
+					echo "<input type='submit' name='return-submit' id='return-submit' value='RETURN' />" ; 
+				echo "</td>" ; 
+			echo "</tr>" ; 	
+		echo "</table></center></form>" ;
+	}	
+	
+}	
+
+
+/**
+* to view menu page  ajax/sales/showroom/products/
+*/
+function _ajax_joury_sales_showroom(){
+	$content =  theme('ajax_sales_showroom_process') ; 
+	echo $content ; 
+}	
+
+
+/**
+* Private function for to view page joury/sales/showroom
+*/
+function _joury_sales_showroom(){
+	return theme('sales_showroom') ; 
+}	
+
+
+/**
+* Implementation of hook_theme
+*/
+
+function joury_sales_theme(){
+	return array(
+		'sales_showroom' => array(
+				'template' => 'sales_showroom' , 
+				'arguments' => array('showrooms' => '' ) , 
+		),		
+		'ajax_sales_showroom_process' => array(
+				'template' => 'ajax_sales_showroom' , 
+				'arguments' => array('showrooms' => '' ) , 
+		),		
+		'sales_returned_products' => array(
+				'template' => 'sales_returned_products' , 
+				'arguments' => array('showrooms' => '' ) , 
+		),
+		
+	);	
+}	

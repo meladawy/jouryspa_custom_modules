@@ -1,0 +1,47 @@
+#hidden-div table{
+	width: 100%;	
+	border-width: 0px ; 
+}
+#hidden-div table td{
+	border-bottom: 1px solid #CCC;
+	padding: 0 0.5em;
+	text-align: center;
+}
+#hidden-div table td+td{
+	border-left: 1px solid #CCC;
+	text-align: center;
+}
+#page-register-admin-table-row-head{
+border-width: 4px;
+	padding: 4px;
+	border-style: ridge;
+	border-right-width: 0px;
+	border-color: gray;
+	-moz-border-radius: ;
+	text-align: center;
+	background:gray ; 
+	color: white;
+	font-weight: bolder;
+	text-transform:uppercase;
+}	
+#ui-datepicker-div{
+margin-top: 200px;	
+}	
+
+#client-service-info{
+	width: 100%;	
+	border-width: 0px ; 
+}
+#client-service-info td{
+	border-bottom: 1px solid #CCC;
+	padding: 0 0.5em;
+	text-align: center;
+}
+#client-service-info td+td{
+	border-left: 1px solid #CCC;
+	text-align: center;
+}
+#hidden-div{
+width: 650px;
+overflow-x: auto;	
+}	

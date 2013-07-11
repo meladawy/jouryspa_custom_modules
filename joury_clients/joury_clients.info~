@@ -1,0 +1,6 @@
+; $Id$
+
+name = joury clients
+description = create clients schema and add clients content
+package = joury spa
+core = 6.x

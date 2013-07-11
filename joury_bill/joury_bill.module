@@ -1,0 +1,241 @@
+<?php
+// $Id$
+
+
+/**
+* Implementatoin of hooK_menu
+*/
+
+
+function joury_bill_menu(){
+	$item['joury/bill'] = array(
+		'title' => t('joury bill') , 
+		'description' => t('') ,
+		'page callback' => '_joury_bill', 
+		'access arguments' => array('menu- joury bill') ,
+		'type' => MENU_NORMAL_ITEM , 
+	
+	);
+	$item['ajax/bill/client/%'] = array(
+		'title' => t('') , 
+		'description' => t('') ,
+		'page callback' => '_ajax_bill_client', 
+		'access arguments' => array('access content') ,
+		'type' => MENU_CALLBACK, 
+	
+	);
+	$item['ajax/bill/next/process'] = array(
+		'title' => t('') , 
+		'description' => t('') ,
+		'page callback' => '_ajax_bill_next_process', 
+		'access arguments' => array('access content') ,
+		'type' => MENU_CALLBACK, 
+	
+	);
+	
+	return $item ;	
+	
+}	
+
+/**
+* Implementation of hook_perm
+*/
+function joury_bill_perm() {
+	return array("menu- joury bill") ; 	
+}	
+
+
+
+/**
+* Private function for the page ajax/bill/client/%
+*/
+
+function _ajax_bill_client(){
+	$postlink = url('ajax/bill/next/process' , array('absolute' => TRUE)) ; 
+	$clientid = arg(3) ; 
+	$allprice = 0 ; 
+	$clientdata = _get_client_bill_data($clientid) ; 	
+	$clientname = _get_client_name($clientid) ; 
+	global $user  ; 
+	$cashier = $user->name ; 
+	$shopname = @variable_get('site_name') ; 
+	echo "<form method='post' action='{$postlink}'>" ; 
+	echo "<table id='ajax-bill-client' >" ; 
+	echo "<tr>" ; 
+		echo "<td colspan='2'> <strong>CLIENT:</strong> ".$clientname."</td>" ; 
+		echo "<td colspan='2'> <strong>DATE:</strong> ".$clientdata[0]->date."</td>" ; 
+	echo "</tr>" ;
+	echo "<tr>" ; 
+		echo "<td colspan='2'> <strong>CASHIER:</strong> ".$cashier."</td>" ; 
+		echo "<td colspan='2' ><strong>SHOP NAME: </strong>".$shopname."</td>" ; 
+	echo "</tr>" ;
+	echo "<tr>" ; 
+		echo "<td id='label-text'> ITEM </td>" ; 
+		echo "<td id='label-text'> QUANTITY </td>" ; 
+		echo "<td id='label-text'> ITEM PRICE </td>" ; 
+		echo "<td id='label-text'> TOTAL PAID </td>" ; 
+	echo "</tr>" ;	 
+	for($k=0 ; $k < count($clientdata) ; $k++){
+		
+		
+	if($clientdata[$k]->type == 'product'){
+		$itemname = "<strong>PRODUCT: </strong> ".$clientdata[$k]->productname ; 	
+	}elseif($clientdata[$k]->type == 'DEBT'){
+		$itemname = "<strong>DEBT: </strong> ".$clientdata[$k]->servicename ; 
+	}else{
+		$itemname = "<strong>SERVICE: </strong> ".$clientdata[$k]->servicename ; 
+	}				
+		
+		
+		
+	echo "<tr>" ; 
+		echo "<td style='text-align:justify; padding-left:70px;'>".$itemname."</td>" ; 
+		echo "<td >".$clientdata[$k]->quantity."</td>" ; 
+		echo "<td >".$clientdata[$k]->sellprice."</td>" ; 
+		echo "<td >".$clientdata[$k]->totalprice."</td>" ; 
+		echo "<input type='hidden' name='showroomid' id='showroomid' value='".$clientdata[$k]->showroomid."' />" ;
+		echo "<input type='hidden' name='quantity' id='quantity' value='".$clientdata[$k]->quantity."' />" ;
+		echo "<input type='hidden' name='productid' id='productid' value='".$clientdata[$k]->productid."' />" ;
+
+	echo "</tr>" ;
+	$allprice += $clientdata[$k]->totalprice ; 
+	}
+	echo "<tr>" ; 
+		echo "<td colspan='4' ><hr/></td>" ; 
+	echo "</tr>" ;	
+	echo "<tr>" ; 
+		echo "<td ><hr></td>" ; 
+		echo "<td ><hr></td>" ; 
+		echo "<td ><strong>TOTAL PRICE: </strong></td>" ; 
+		echo "<td >".$allprice." <strong>KWD</strong> </td>" ; 
+	echo "</tr>" ;	
+		echo "<tr>" ; 
+		echo "<td colspan='4' syle='text-align:center;'><strong>DISCOUNT:</strong><input type='text' size='5' name='discount' id='discount' value='0' /> % </td>" ; 
+		/*echo "<td colspan='2'><strong>FOLLOWER:</strong>" ;
+		_print_select_input_type_staff('staffid','joury_staff','firstname','sid','select-staff') ;  //follower
+		echo "</td>"  ; */
+	echo "</tr>" ;	
+	echo "<tr>" ; 
+	//	echo "<td colspan='2' ><input type='submit' name='deletetransaction' id='deletetransaction' value='DELETE' /></td>" ; 
+		echo "<input type='hidden' name='clientid' id='clientid' value='{$clientid}' />" ; 
+		echo "<input type='hidden' name='cashier' id='cashier' value='{$cashier}' />" ; 	
+		echo "<input type='hidden' name='allprice' id='allprice' value='{$allprice}' />" ; 
+		echo "<td colspan='4' ><input type='submit' name='next' id='next' value='FINISH' /></td>" ; 
+	echo "</tr>" ;	
+
+	echo "</table>" ; 
+	echo "</form>" ; 
+
+		
+}	
+
+
+
+
+/**
+* when somebody press next in bill system
+*/
+
+function _ajax_bill_next_process(){
+	return theme('bill_next_process') ; 
+	
+}	
+
+
+/**
+* Implementation of hook_theme
+*/
+function joury_bill_theme(){
+	return array(
+		'bill_next_process' => array(
+			'template' => 'bill_next_process' ,
+			'arguments' =>  array() , 
+		),
+		'joury_bill' => array(
+				'template' => 'joury_bill' , 
+				'arguments' => array() , 
+			) , 	
+	) ; 	
+}
+
+
+
+/**
+* Private function that get users bill
+*/
+
+function _get_bill_users(){
+	global $user;  
+	$staff_center = $user->centerdetails ; 
+	if(user_access("override centers division")) {
+	$result_handle = db_query("select * from `joury_bill` where `status` = 0 group by clientid") ; 
+	}else{	
+	$result_handle = db_query("select * from `joury_bill` where `status` = 0 and `by` in 
+	(select `uid` from {joury_centers_users} where `centername` = '%s' ) group by clientid", $staff_center) ; 	
+	}	
+	while($result = db_fetch_object($result_handle)){
+			$result_num[] = $result ; 
+		}
+		
+	return $result_num ; 	
+	
+}	
+
+
+/**
+* Private function for the page joury/bill
+*/
+
+function _joury_bill(){
+	return theme('joury_bill') ; 	
+}	
+
+/**
+* Privat function to get the client data bill
+*/
+
+function _get_client_bill_data($clientid){
+	$result_handle = db_query("select * from `joury_bill` where `clientid` =  %d and `status` = 0" , $clientid) ; 
+	while($result = db_fetch_object($result_handle)){
+			$result_num[] = $result ; 
+		}
+		
+	return $result_num ; 	
+}
+
+
+/**
+* Privat function to get the client data bill
+*/
+
+function _get_bill_data($bid){
+	$result_handle = db_query("select * from `joury_bill` where `bid` =  %d" , $bid) ; 
+	while($result = db_fetch_object($result_handle)){
+			$result_num[] = $result ; 
+		}
+	return $result_num ; 	
+}
+
+
+
+/**
+* get bills by date
+*/
+function _get_bill_data_with_date($date){
+	$result_handle = db_query("select * from {joury_bill_primary} where `date` like '%%%s%%'" , $date ) ; 
+	while($result_obj =  db_fetch_object($result_handle)) {
+		$result[] = $result_obj ; 
+	}
+	return $result ; 
+}	
+
+
+
+/**
+* get bills by date
+*/
+function _get_primary_bill_data($id){
+	$result_handle = db_query("select * from {joury_bill_primary} where `id` =  %d " , $id ) ; 
+	$result_obj =  db_fetch_object($result_handle) ; 
+	return $result_obj ; 
+}	

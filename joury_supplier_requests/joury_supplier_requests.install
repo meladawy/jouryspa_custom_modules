@@ -1,0 +1,47 @@
+<?php
+// $Id$
+
+/**
+* Implementation of hook_install
+*/
+function joury_supplier_requests_install(){
+ 	drupal_install_schema('joury_supplier_requests'); 
+}
+
+
+/**
+* Implementation of hook_uninstall
+*/
+function joury_supplier_requests_uninstall(){
+ 	drupal_uninstall_schema('joury_supplier_requests'); 
+}
+
+
+/**
+* Implementation of hook_schema
+*/
+function joury_supplier_requests_schema(){
+	$schema['joury_requests_from_suppliers'] = array(
+		'description' => 'this table control the showrooms ',
+		'fields' => array(
+			'id' => array('type' => 'serial' , 'unsigned' => TRUE , 'not null' => TRUE,) , 
+			'productid' => array('type' => 'int' , 'unsigned' => TRUE , 'not null' => TRUE, 'default' => 0 , ) ,
+			'productname' => array('type' => 'varchar' ,'length' => 40, 'not null' => TRUE, 'default' => '' , ) ,
+			'quantity' => array('type' => 'int' , 'unsigned' => TRUE , 'not null' => TRUE, 'default' => 0 , ) ,	
+			'supplierid' =>array('type' => 'int' , 'unsigned' => TRUE , 'not null' => TRUE, 'default' => 0 , ) ,	
+			'suppliername' => array('type' => 'varchar' ,'length' => 40, 'not null' => TRUE, 'default' => '' , ) ,	
+			'itempricead' => array('type' => 'float' , 'unsigned' => TRUE , 'not null' => TRUE, 'default' => 0.0 , ) ,	
+			'itempricebd' => array('type' => 'float' , 'unsigned' => TRUE , 'not null' => TRUE, 'default' => 0.0 , ) ,				
+			'discountp' => array('type' => 'float' , 'unsigned' => TRUE , 'not null' => TRUE, 'default' => 0.0 , ) ,	
+			'discounta' => array('type' => 'float' , 'unsigned' => TRUE , 'not null' => TRUE, 'default' => 0.0 , ) ,	
+			'nettotalad' => array('type' => 'float' , 'unsigned' => TRUE , 'not null' => TRUE, 'default' => 0.0 , ) ,							
+			'nettotalbd' => array('type' => 'float' , 'unsigned' => TRUE , 'not null' => TRUE, 'default' => 0.0 , ) ,			
+			'status' => array('type' => 'int' , 'unsigned' => TRUE , 'not null' => TRUE, 'default' => 0 , ) ,		
+			'date' =>  array('type' => 'varchar' ,'length' => 50, 'not null' => TRUE, 'default' => '' , ) ,
+			'author' =>  array('type' => 'varchar' ,'length' => 50, 'not null' => TRUE, 'default' => '' , ) ,							
+		),
+		'primary key' => array('id'),
+	);
+	
+	return $schema ; 
+}

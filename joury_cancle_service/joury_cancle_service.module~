@@ -1,0 +1,240 @@
+<?php
+// $Id$
+
+
+/**
+* Implementatio of hook_menu
+*/
+
+function joury_cancle_service_menu(){
+	$menu['joury/cancle/service'] = array(
+		'title' => t('CANCLE SERVICES') , 
+		'description' => t('') ,
+		'page callback' =>  '_joury_cancle_service' , 
+		'access arguments' => array('manu- cancle service') , 
+		'type' => MENU_NORMAL_ITEM , 
+ 	) ;
+
+	$menu['generate/client/service/table'] = array(
+		'page callback' =>  '_generate_client_service_table' , 
+		'access arguments' => array('access content') , 
+		'type' => MENU_CALLBACK , 
+ 	) ;	
+	
+	return $menu ;  
+}	
+
+/**
+* Implementation of hook_perm().
+*/
+function joury_cancle_service_perm() {
+	return array("manu- cancle service") ;  	
+}	
+
+
+/**
+* generate client service table
+*/
+function _generate_client_service_table(){
+	$clientid = $_POST['clientid'] ; 
+	if(!empty($clientid)){
+		$client_services = _get_client_services_registered($clientid) ; 
+		$client_data = _get_client_by_id($clientid) ; 
+		
+		if(count($client_services) ==0){
+			echo "<div class='message error'><center>NO DATA</center> </div>"; 	
+		}else{
+			echo "<center><table id='cancle-service-table'>" ; 
+				echo "<tr>" ; 
+				
+					echo "<td  id='head-row'>" ;
+						echo "CLIENT NAME " ; 
+					echo "</td>" ;
+					
+					echo "<td id='head-row'>" ;
+						echo "SERVICE NAME" ; 					
+					echo "</td>" ; 
+					
+					echo "<td id='head-row'>" ;
+						echo "REGISTER DATE" ; 	
+					echo "</td>" ;  
+					
+					echo "<td id='head-row'>" ;
+						echo "SERVICE PRICE" ; 	
+					echo "</td>" ;  
+					
+					echo "<td id='head-row'>" ;
+						echo "PAID" ; 	
+					echo "</td>" ;  
+
+					echo "<td id='head-row'>" ;
+						echo "CENTER NAME" ; 	
+					echo "</td>" ;  
+					
+					echo "<td id='head-row'>" ;
+						echo "CASHIER" ; 	
+					echo "</td>" ;  
+					
+					echo "<td id='head-row'>" ;
+						echo "REMOVE" ; 	
+					echo "</td>" ;  
+					
+										
+				echo "</tr>" ; 			
+			
+			foreach($client_services as $service){
+				$servicedata = _get_service_by_id($service->sid) ; 
+				$cashierdata = user_load($service->author) ; 
+				echo "<tr>" ; 
+					echo "<td >" ;
+						echo $client_data->firstname." ".$client_data->lastname ; 
+					echo "</td>" ;
+					
+					echo "<td >" ;
+						echo $servicedata->name ; 					
+					echo "</td>" ; 
+					
+					echo "<td >" ;
+						echo  $service->date ; 	
+					echo "</td>" ;  
+					
+					echo "<td >" ;
+						echo  $servicedata->price; 	
+					echo "</td>" ;  
+					
+					echo "<td >" ;
+						echo $service->paid ; 	
+					echo "</td>" ;  
+
+					echo "<td >" ;
+						echo $service->centername ; 	
+					echo "</td>" ;  
+					
+					echo "<td >" ;
+						echo $cashierdata->name ; 		
+					echo "</td>" ;  
+					
+					echo "<td >" ;
+						echo "<input type='checkbox'  name='rid-".$service->id."'/>"  ; 	
+					echo "</td>" ;  		
+				echo "</tr>" ; 
+			}	
+			echo "</table></center>" ;  
+		}		
+	}	
+}	
+
+/**
+* function for jour/cancle/service
+*/
+function _joury_cancle_service(){
+	$module_path = drupal_get_path('module' , 'joury_cancle_service') ;
+	$frontpage = url('' , array('absolute' => TRUE) );
+	drupal_add_js($module_path."/joury_cancle_service.js") ;  
+	drupal_add_js(array('frontpage' => $frontpage),'setting')  ;
+	drupal_add_css($module_path."/joury_cancle_service.css")  ;
+	return drupal_get_form('cancle_service_form') ; 	
+}	
+
+
+/**
+* form of cancle client services
+*/
+function cancle_service_form($form_state){
+	$clients = _get_clients_that_register_service_in_array() ; 
+	
+	$form['container'] =  array(
+		'#type' => 'fieldset' ,
+		'#title' => t('CANCLE SERVICE') ,
+		'#collapsible' => TRUE ,
+		'#description' => 'Add the configuration' ,  
+	) ; 
+	$form['container']['clientid'] =  array(
+		'#type' => 'select' ,
+		'#title' => t('CLIENT NAME') ,
+		'#options' => $clients ,
+		'#description' => 'Add the client name' ,  
+	) ; 
+	$form['container']['services'] =  array(
+		'#type' => 'markup' ,
+		'#value' => "<div id='client-services'></div>" ,
+	) ; 
+	
+	$form['container']['submit'] =  array(
+		'#type' => 'submit' ,
+		'#value' => 'SAVE' ,  
+	) ; 
+	
+	
+	return $form ; 	
+}	
+
+/**
+* form submit
+*/
+function cancle_service_form_validate($form, $form_state){
+	if($form['#post']['clientid'] == '' ){
+		form_set_error('clientid', 'Please insert the client id ') ; 
+	}	
+	foreach($form['#post'] as $key=>$val){
+		if($val == 'on') {
+			$rid[] = substr($key,4,2452345)  ; 	
+		}		
+	}	
+	if($form['#post']['clientid'] != ''  &&  count($rid) == 0){
+		form_set_error('clientid', 'Please select the service you want to cancle..') ; 
+	}		
+	
+}	
+
+
+
+/**
+* form submit
+*/
+function cancle_service_form_submit($form, $form_state){
+	foreach($form['#post'] as $key=>$val){
+		if($val == 'on') {
+			$rid[] = substr($key,4,2452345)  ; 	
+		}		
+	}
+	
+	if(count($rid) > 0){
+		foreach($rid as $key=>$val){
+			$register_data = _get_register_data_by_rid($val) ; 
+			$client_data   = _get_client_by_id($register_data->cid) ; 	
+			$service_data = _get_service_by_id($register_data->sid) ;
+			$timestamp = time() ; 
+			$date = date("m/d/Y h:i a") ; 
+			global $user ; 
+			
+			db_query("delete from {joury_client_services_register} where `id` =  %d" , $val) ;
+			db_query("delete from {joury_clients_attendance_size} where `rid` =  %d" , $val) ;
+			db_query("delete from {joury_bill} where `service_rid` =  %d" , $val) ;
+			 	
+			db_query("insert into {joury_cancle_service} (`cid` , `clientname` ,`servicename` , `centername`,`date`,`removed_by`)  
+			values (%d,'%s','%s','%s','%s','%s')" ,
+			 $register_data->cid ,$client_data->firstname." ".$client_data->lastname,$service_data->name,$register_data->centername
+			 ,$date,$user->name )	 ; 
+		}	
+		drupal_set_message("<div class='message ok'><center>SUCCESSFULY CANCELED</center></div>") ; 		
+	}		
+}	
+
+
+
+/**
+* get clients that register services in array
+*/
+function _get_clients_that_register_service_in_array(){
+	$result_handle =  db_query("select * from {joury_client_services_register}") ; 	
+	while($result_obj  =  db_fetch_object($result_handle)){
+		$clientsid[] =	$result_obj->cid ; 
+	}	
+	$clients[''] = 'select-client' ; 
+	foreach((array) $clientsid as  $key => $val){
+		$clientname  = _get_client_name($val) ; 	
+		$clients[$val] = $clientname ; 
+	}	
+	return $clients ; 
+}	

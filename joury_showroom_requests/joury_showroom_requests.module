@@ -1,0 +1,72 @@
+<?php
+// $Id$
+
+
+/**
+* Implementation of hook_menu
+*/
+
+function joury_showroom_requests_menu(){
+	$menu['joury/showroom/requests/lists'] = array(
+		'title' => t('SHOWROOM REQUESTS') ,
+		'description' => t('') , 
+		'page callback' => '_joury_showroom_requests_lists' ,
+		'access arguments' => array('menu- showroom requests') ,
+		'type' => MENU_NORMAL_ITEM,
+	);
+	
+	return $menu ; 
+}	
+
+/**
+* implmentatin of hook_perm
+*/
+function joury_showroom_requests_perm(){
+	return array("menu- showroom requests") ; 
+}
+
+
+/**
+* Implementation of hook_theme
+*/
+
+function _joury_showroom_requests_lists(){
+	return theme('theme_joury_showroom_requests_lists'); 
+}	
+
+
+/**
+* Implementation of hook_theme
+*/
+function joury_showroom_requests_theme(){
+	return array(
+		'theme_joury_showroom_requests_lists' => array(
+			'template' => 'page_joury_showroom_requests_lists'	,
+			'arguments' => array('') , 
+		),
+	);		
+}
+
+
+/**
+* Private function to get showroom requests
+*/
+
+function _get_showroom_requests() {
+	$result_handle = db_query("select * from `joury_showoom_requests` where `status` = 0 order by id desc limit 50") ;
+ while ($result_object = db_fetch_object($result_handle)) {
+ 		$result_arr[] = $result_object ; 
+ 	} 
+ return $result_arr ; 
+	
+}	
+
+
+/**
+* Get Show room request data by id 
+*/
+function _get_showroom_request_by_id($reqid){
+$result_handle = db_query("select * from {joury_showoom_requests} where `id` = %d" , $reqid) ;
+$result = db_fetch_object($result_handle) ; 
+return $result ;   	
+}	

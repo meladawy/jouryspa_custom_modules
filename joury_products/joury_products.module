@@ -1,0 +1,169 @@
+<?php
+// $Id$
+
+
+/**
+* Implementation of hook_nodeapi
+*/
+
+function joury_products_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL){
+	switch($op){
+			case 'prepare' :
+				if($node->type == 'products'){
+					$module_path = drupal_get_path('module' , 'joury_products') ; 
+					drupal_add_js($module_path."/add_product.js") ; 
+				}	
+			break ; 			
+		
+			case 'insert' :
+			if($node->type == 'products'){
+				$name = $node->title ; 
+				$nid = $node->nid ;
+				$rate = $node->field_productrate[0]['value'] ;
+				$price = $node->field_productsellingprice[0]['value'] ;
+				$deadquantity = $node->field_productdeadquantity[0]['value'] ;
+				$description = $node->body ; 
+				$suppliers_count = count($node->field_productsuppliers) ; 
+				$suppliers = '' ;
+				for($k = 0 ;  $k < $suppliers_count ; $k++ ){
+					$suppliers .= " , ".$node->field_productsuppliers[$k]['nid'] ; 	
+				}	  
+				$suppliers .= " ,";
+				
+				if(empty($price)){
+					$price = 0 ; 	
+				}	
+				
+				if(empty($rate)){
+					$rate = 0 ; 	
+				} 
+			
+				db_query("insert into {joury_products} (`nid` , `name`, `rate` , `description` , `suppliers`,`selling_price`,`d_qty`)  
+				values (%d , '%s', %d , '%s' , '%s',%f,%d)" , $nid, $name,$rate, $description, $suppliers,$price,$deadquantity); 
+			}			
+			break; 		
+			
+			case 'update' :
+			if($node->type == 'products'){
+				$name = $node->title ; 
+				$nid = $node->nid ;
+				$rate = $node->field_productrate[0]['value'] ;
+				$price = $node->field_productsellingprice[0]['value'] ;		
+				$deadquantity = $node->field_productdeadquantity[0]['value'] ;		
+				$description = $node->body ; 
+				$suppliers_count = count($node->field_productsuppliers) ; 
+				$suppliers = '' ;
+				for($k = 0 ;  $k < $suppliers_count ; $k++ ){
+					$suppliers .= " , ".$node->field_productsuppliers[$k]['nid'] ; 	
+				}	  
+				$suppliers .= " ,";
+				
+				if(empty($price)){
+					$price = 0 ; 	
+				}	
+				
+				if(empty($rate)){
+					$rate = 0 ; 	
+				} 
+				 
+				db_query("update  {joury_products} set  `selling_price` = %f , `name` = '%s',`rate` = %d , `description` = '%s' , `suppliers` = '%s',`d_qty` = %d  where `nid` = %d ",
+				$price, $name,$rate,$description ,$suppliers,$deadquantity, $nid); 
+			}	
+			break;
+			
+			case 'delete' :
+			if($node->type == 'products'){
+				$name = $node->title ; 
+				$nid = $node->nid ; 
+				db_query("delete from  {joury_products} where `nid` = %d " , $nid); 
+			}		
+			break;
+			
+			case 'view' :
+				
+			break ; 		
+		
+		}	
+}
+
+
+
+/**
+* Implementation of hook_jourymenu
+*/
+
+function joury_products_jourymenu(){
+	return array(
+	'products',
+	'joury_products',
+	array('pid' => 'id', 'name' => 'name'),
+	array('tablename' => 'joury_products' , 'fields' => array('name' => 'NAME' , 'pid' => 'PRODUCT ID'),) , 
+	'',
+	'',
+	); 	
+}
+
+
+
+/**
+* Get Rate of Product Id
+*/
+function _get_rate_of_productid($pid){
+	$result_handle = db_query("select `rate` from `joury_products` where `pid` =  %d" , $pid) ; 
+	$result_obj = db_fetch_object($result_handle) ; 
+	return $result_obj->rate ; 
+}	
+
+/**
+* Get Rate of Product Id
+*/
+function _get_sellprice_of_productid($pid){
+	$result_handle = db_query("select `selling_price` from `joury_products` where `pid` =  %d" , $pid) ; 
+	$result_obj = db_fetch_object($result_handle) ; 
+	return $result_obj->selling_price ; 
+}
+
+
+/**
+* Get Products By Keyword
+*/
+function _get_products_by_keyword($keyword){
+	$result_handle = db_query("select * from `joury_products` where `name` like '%%%s%%' " , $keyword) ; 
+	while($result_obj = db_fetch_object($result_handle)){ 
+		$result[] =  $result_obj ; 
+	}
+	return $result ; 
+}	
+
+
+/**
+* Get Products By Keyword and supplier
+*/
+function _get_products_by_keyword_and_supplier($keyword , $supplierid){
+	$suppliernid = _get_nid_of_supplierid($supplierid) ; 
+	$result_handle = db_query("select * from `joury_products` where `name` like '%%%s%%' and `suppliers` like '%%%s%%' " , $keyword,", ".$suppliernid." ,") ; 
+	while($result_obj = db_fetch_object($result_handle)){ 
+		$result[] =  $result_obj ; 
+	}
+	return $result ; 
+}	
+
+
+/**
+* get prodcut static price
+*/
+function _get_product_static_price($productid){
+	$result_handle = db_query("select * from `joury_products` where `pid` = %d " , $productid) ; 
+	$result_obj = db_fetch_object($result_handle) ; 
+	return $result_obj->selling_price ; 
+}	
+
+/**
+* get dead quantity of product id
+*/
+
+function _get_deadquantity_of_productid($productid){
+	$result_handle = db_query("select * from `joury_products` where `pid` = %d " , $productid) ; 
+	$result_obj = db_fetch_object($result_handle) ; 
+	return $result_obj->d_qty ; 
+}	

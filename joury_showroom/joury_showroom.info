@@ -1,0 +1,5 @@
+; $Id$
+name = joury showroom
+description = details of each showroom
+core = 6.x 
+package = joury spa 

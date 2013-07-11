@@ -1,0 +1,5 @@
+; $Id$
+name = joury clients attendance
+description = control the attendance of clients
+core = 6.x
+package = joury spa

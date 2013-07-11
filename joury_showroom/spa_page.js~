@@ -1,0 +1,7 @@
+$(document).ready(start) ; 
+function start(){
+	$("edit-client-name").change(function (){ // form client name is changed
+		var clientname = $(this).val() ; 
+		
+	}) ; // end of : form client name is changed
+}	

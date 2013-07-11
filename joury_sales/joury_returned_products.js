@@ -1,0 +1,68 @@
+$(document).ready(start) ; 
+
+function start (){
+	var frontpage = Drupal.settings.url ;	
+	
+	// make service select box a combo box	
+	window.dhx_globalImgPath = frontpage + "sites/all/modules/joury_register_service/codebase/imgs/";
+	var z=dhtmlXComboFromSelect("clientid");
+	z.enableFilteringMode(true);	
+	
+			// empty input when - pressed
+	z.attachEvent("onKeyPressed", function(keyCode){
+		if(keyCode == 189){
+			z.DOMelem_input.value = "" ; 
+		}	
+	});  
+	
+	$("#date").datepicker({ changeYear: true , yearRange: '2000:2018'});
+	$("input[id=getproducts]").click(function(){	
+			var clientid = $("input[name=clientid]").val() ; 
+			var date = $("#date").val() ; 
+			if(clientid == 0 ){
+				alert("please select client first.") ;
+				return false ; 	
+			}
+			if(date == ''){
+				alert("please insert the date please.") ;
+				return false ; 
+			}				
+			$("#returned-products-table-ajax-content").addClass("loading-d") ; 
+			$("#returned-products-table-ajax-content").load( frontpage + "/joury/sales/returned/products/table" , {"clientid" : clientid ,
+			"date" : date} , tableloaded) ; 
+			
+			});
+	function tableloaded(){
+				$("#returned-products-table-ajax-content").removeClass("loading-d") ;
+				$("input[id=select]").change(function () {
+			    if ($(this).attr("checked")) {  //checkbox is enabled
+			       $(this).closest('tr').attr('id','current-export-row') ; 
+			       $("#current-export-row").addClass("message ok") ; 
+			       $("#current-export-row #quantity").removeAttr("disabled") ; 
+					 $("#current-export-row #quantity").removeAttr("style") ; 
+					 $("#current-export-row").removeAttr('id') ; 
+				return;
+			    }
+			    // checkbox is disabled
+			    
+			    	 $(this).closest('tr').attr('id','current-export-row') ; 
+			    	 $("#current-export-row").removeClass("message ok") ; 
+			       $("#current-export-row #quantity").attr("disabled","23") ; 
+					// $("#current-export-row #quantity").css("background","#BDBDBD") ; 
+					 $("#current-export-row").removeAttr('id') ; 
+					});
+					
+				$("input[id=quantity]").click(function() {
+					var quantityInputValue = $(this).val() ; 
+					$(this).keyup(function(){
+						var newValue = $(this).val() ; 
+							if(newValue > quantityInputValue) {
+								alert("too much quantity") ; 	
+								$(this).val(quantityInputValue) ;
+							}	
+					});	
+				});	
+				
+		
+	}		
+}	

@@ -1,0 +1,6 @@
+; $Id$ 
+
+name = joury cancle client service
+description = you can cancle client service by this module
+core = 6.x
+package = joury spa

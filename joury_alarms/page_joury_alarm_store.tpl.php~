@@ -1,0 +1,75 @@
+<?php
+// $Id$
+
+$module_path = drupal_get_path('module' , 'joury_alarms') ; 
+$printimg_url = url($module_path."/print.gif", array('absoluter' => TRUE)) ; 
+drupal_add_css($module_path."/alarm_pages_style.css") ; 
+drupal_add_js($module_path."/js/jquery.printElement.js") ;
+drupal_add_js($module_path."/js/script.js") ;
+
+
+
+$products_data = _get_products_of_store_with_alarm() ;  
+
+
+if(count($products_data) == 0){		
+			echo "<div class='messag error'><center>NO DATA</center></div>" ; 
+		}else{
+echo "<a href='#' id='printer-link' ><img src='$printimg_url' width='30'/></a>" ; 		
+echo "<center><table id='report-table'>" ; 
+				echo "<tr>" ; 
+				
+					echo "<td  id='head-row'>" ;
+						echo "STORE NAME" ; 
+					echo "</td>" ;
+					
+					echo "<td id='head-row'>" ;
+						echo "PRODUCT NAME" ; 					
+					echo "</td>" ; 
+										
+					echo "<td id='head-row'>" ;
+						echo "CURRENT QUANTITY" ; 	
+					echo "</td>" ; 
+					
+					echo "<td id='head-row'>" ;
+						echo "DEAD QUANTITY" ; 	
+					echo "</td>" ;   
+										
+					echo "<td id='head-row'>" ;
+						echo "QUANTITY NEEDED" ; 	
+					echo "</td>" ; 
+											
+				echo "</tr>" ; 
+				
+		for ($k=0 ; $k<count($products_data) ; $k++){
+			$deadquantity = _get_deadquantity_of_productid($products_data[$k]->productid) ; 
+				echo "<tr>" ; 
+				
+					echo "<td >" ;
+						echo $products_data[$k]->storename ; 
+					echo "</td>" ;
+					
+					echo "<td >" ;
+						echo $products_data[$k]->productname ; 					
+					echo "</td>" ; 
+										
+					echo "<td >" ;
+						echo $products_data[$k]->quantity ; 	
+					echo "</td>" ;  
+					
+					echo "<td >" ;
+						echo $deadquantity ; 	
+					echo "</td>" ; 
+					
+					echo "<td >" ;
+						echo $deadquantity - ($products_data[$k]->quantity) ; 	
+					echo "</td>" ;   
+											
+				echo "</tr>" ; 
+		}			
+
+
+echo "</table> </center>" ; 
+
+
+}

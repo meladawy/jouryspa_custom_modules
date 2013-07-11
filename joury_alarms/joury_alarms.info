@@ -1,0 +1,6 @@
+; $Id$
+
+name = joury alarms
+description = generate alarms page
+core = 6.x
+package = joury spa

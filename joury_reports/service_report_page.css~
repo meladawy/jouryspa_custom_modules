@@ -1,0 +1,29 @@
+#service-report-table{
+	
+}
+#service-report-table td{
+	border-width: 2px;
+	padding: 2px;
+	border-style: dotted;
+	border-right-width: 0px;
+	border-color: black;
+	-moz-border-radius: ;
+	text-align: center;	
+}
+#service-report-table tr{
+	
+}
+
+#head-row{
+	border-width: 4px;
+	padding: 4px;
+	border-style: ridge;
+	border-right-width: 0px;
+	border-color: gray;
+	-moz-border-radius: ;
+	text-align: center;
+	background:gray ; 
+	color: white;
+	font-weight: bolder;
+	text-transform:uppercase;	
+}	

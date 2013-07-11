@@ -1,0 +1,49 @@
+#supplier-table-head{
+border-width: 2px;
+padding: 4px;
+border-style: ridge;
+border-right-width: 0px;
+border-color: gray;
+-moz-border-radius: ;
+text-align: center;
+background: gray;
+color: white;
+font-weight: bolder;
+text-transform: uppercase;
+}
+
+#suppliers-export-table{	
+	border:3px solid gray ; 
+	width: 100%;
+}	
+#suppliers-export-table td{	
+	text-align: center;
+}	
+
+#requested-product-content{
+	width: 98%;
+	margin-bottom: 112px;
+}	
+
+#requested-product-content td{
+	text-align: center;
+}	
+
+#supplier-dynamic-content{
+	width: 98%;
+}	
+#supplier-dynamic-content td{
+	text-align: center;
+}	
+#selected-fieldset tr td{
+width: 50%;	
+}	
+#selected-fieldset{
+	height: 156px;
+overflow-y: auto;
+}	
+
+#result-fieldset{
+	height: 156px;
+	overflow-y: scroll;  
+}

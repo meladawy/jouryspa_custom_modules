@@ -1,0 +1,6 @@
+; $Id$
+
+name = joury clients debts
+description = joury clients debts schema
+core = 6.x
+package = joury spa

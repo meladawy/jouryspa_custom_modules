@@ -1,0 +1,5 @@
+; $Id$
+name = joury stores
+description = you can use this module to add new store and control existing stores
+core = 6.x
+package = joury spa
